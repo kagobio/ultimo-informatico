@@ -6,6 +6,7 @@ export function move(e, dt, s, dx, dy, speed) {
   let sx = 0, sy = 0;
   if (!e.isBoss) s.forEachNear(e.x, e.y, e.r * 1.7, (o) => { if (o === e) return; const ox = e.x - o.x, oy = e.y - o.y, d2 = ox * ox + oy * oy, m = (e.r + o.r) * 0.9; if (d2 < m * m && d2 > 0.01) { const d = Math.sqrt(d2); sx += ox / d * (m - d); sy += oy / d * (m - d); } });
   e.x += (dx * speed + e.kx + sx * 9) * dt; e.y += (dy * speed + e.ky + sy * 9) * dt;
+  if (e.def.ai !== 'email' && s.cgrid) { const h = s.pushOut(e, e.isBoss ? 14 : Math.min(e.r, 10)); if (h) { if (!e.side) e.side = Math.random() < 0.5 ? -1 : 1; const t = speed * 0.9 * e.side * dt; e.x += -h[1] * t; e.y += h[0] * t / 1.8; } }
   const k = Math.max(0, 1 - dt * 7); e.kx *= k; e.ky *= k;
   if (Math.abs(dx) > 0.2) e.face = dx < 0 ? -1 : 1;
 }
