@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { CHARACTERS } from '../data/content.js';
 import { META_UPS } from '../data/content.js';
 import { PLAYER_SPEED_K, WORLD } from '../config.js';
@@ -16,9 +17,9 @@ export class Player {
     this.x = WORLD / 2; this.y = WORLD / 2; this.r = 7; this.h = 34;
     this.invuln = 0; this.slowT = 0; this.avT = 0; this.damageDealt = 0; this.anim = 0; this.face = 1;
     const texKey = charKey === 'tecnico' && save.skin !== 'clasico' ? 'p_' + save.skin : c.tex;
-    this.texKey = texKey;
-    this.shadow = scene.add.image(0, 0, 'shadow').setScale(3.2);
-    this.sprite = scene.add.image(0, 0, texKey + '_0').setScale(3);
+    this.texKey = texKey; if (ART.is(texKey)) this.r = 8;
+    this.shadow = scene.add.image(0, 0, 'shadow').setScale(0.85);
+    this.sprite = scene.add.image(0, 0, texKey + '_0').setScale(ART.scale(texKey, 3));
     this.weapons = []; this.passives = {}; this.vx = 0; this.vy = 0;
   }
   static need(l) { return Math.round(4 + 2.4 * l + 0.1 * l * l); }
@@ -39,13 +40,14 @@ export class Player {
     this.x = Math.min(WORLD - 24, Math.max(24, this.x + this.vx * dt)); this.y = Math.min(WORLD - 24, Math.max(24, this.y + this.vy * dt));
     if (ix < -0.1) this.face = -1; else if (ix > 0.1) this.face = 1;
     const moving = len > 0.1; if (moving) this.anim += dt * 9;
-    const fr = moving ? (Math.floor(this.anim) % 2) : 0;
+    const fr = moving ? (Math.floor(this.anim) % 2) : 0; const wf = ART.wframe(this.texKey, moving ? Math.floor(this.anim * 0.55) : 0);
     this.invuln -= dt; this.slowT -= dt; this.avT -= dt;
     if (this.flash > 0) { this.flash -= dt; if (this.flash <= 0) this.sprite.clearTint(); }
     const bob = moving ? Math.abs(Math.sin(this.anim * Math.PI)) * 2 : 0;
-    this.sprite.setTexture(this.texKey + '_' + fr).setPosition(this.x, this.y - bob).setDepth(this.y + 30).setFlipX(this.face < 0);
+    this.sprite.setTexture(wf || (this.texKey + '_' + fr)).setPosition(this.x, this.y - bob).setDepth(this.y + 30).setFlipX(this.face < 0);
+    if (ART.has.has(this.texKey)) { this.sprite.setOrigin(0.5, 0.5); ART.anim(this.sprite, ART.scale(this.texKey, 3), ART.scale(this.texKey, 3), this.anim * 0.5 + this.x * 0, moving, this.face, wf ? 0.3 : 1); }
     this.sprite.setAlpha(this.invuln > 0 && Math.floor(this.invuln * 20) % 2 ? 0.55 : 1);
-    this.shadow.setPosition(this.x, this.y + 28).setDepth(this.y + 29);
+    this.shadow.setPosition(this.x, this.y + (ART.has.has(this.texKey) ? 37 : 28)).setDepth(this.y + 29);
   }
   antivirus(sec) {
     this.avT = sec; const ws = this.weapons.filter((w) => !w.blocked); if (ws.length) ws[Math.floor(Math.random() * ws.length)].blockedUntil = this.s.t + sec;
