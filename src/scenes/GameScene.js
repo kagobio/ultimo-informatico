@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { WORLD, MAX_ENEMIES, DEBUG } from '../config.js';
 import { Save } from '../systems/Save.js';
 import { Sfx } from '../systems/Sfx.js';
@@ -24,7 +25,7 @@ export class GameScene extends Phaser.Scene {
     this.hpScale = 1; this.dmgScale = 1;
     this.cameras.main.setBackgroundColor(map.bg).setRoundPixels(true);
     // Suelo isométrico + muros
-    this.floor = this.add.tileSprite(0, 0, WORLD / 1.5, WORLD / 3 * 1.0, 'floor').setOrigin(0, 0).setTileScale(1.5).setTint(map.floor).setDepth(-1e5);
+    this.floor = this.add.tileSprite(0, 0, WORLD / 1.5, WORLD / 3 * 1.0, 'floor').setOrigin(0, 0).setTileScale(ART.has.has('floor') ? 0.75 : 1.5).setTint(map.floor).setDepth(-1e5);
     this.floor.setSize(WORLD, WORLD);
     const wl = this.add.graphics().setDepth(-9e4);
     wl.fillStyle(0x2a3350, 1).fillRect(-80, -90, WORLD + 160, 90).fillRect(-80, WORLD, WORLD + 160, 70).fillRect(-80, 0, 80, WORLD).fillRect(WORLD, 0, 80, WORLD);
@@ -71,11 +72,11 @@ export class GameScene extends Phaser.Scene {
       if ((x - cx) ** 2 + (y - cx) ** 2 < 260 * 260) continue;
       if (placed.some((q) => (q[0] - x) ** 2 + (q[1] - y) ** 2 < 130 * 130)) continue;
       placed.push([x, y]); const k = props[Math.floor(Math.random() * props.length)], d = step[Math.floor(Math.random() * 3)], cnt = (k === 'prop_desk' || k === 'prop_rack' || k === 'prop_printer') ? 3 : 1;
-      for (let m = 0; m < cnt; m++) { const px = x + d[0] * m * 1.5, py = y + d[1] * m * 1.5; if (px > W - 60 || py > W - 40 || px < 60) break; g.fillStyle(0x000000, 0.25).fillEllipse(px, py - 2, 80, 22); this.add.image(px, py, k).setOrigin(0.5, 1).setScale(3).setDepth(py); n++; }
+      for (let m = 0; m < cnt; m++) { const px = x + d[0] * m * 1.5, py = y + d[1] * m * 1.5; if (px > W - 60 || py > W - 40 || px < 60) break; g.fillStyle(0x000000, 0.25).fillEllipse(px, py - 2, 80, 22); this.add.image(px, py, k).setOrigin(0.5, 1).setScale(ART.scale(k, 3)).setDepth(py); n++; }
     }
   }
   sfx(n) { Sfx.play(n); }
-  announce(text) { const ui = this.scene.get('UI'); if (ui && ui.tBanner) ui.banner(text); else this.time.delayedCall(120, () => { if (!this.over) this.announce(text); }); }
+  announce(text) { const ui = this.scene.get('UI'); if (ui && ui.tBanner && ui.tBanner.active && ui.tBanner.scene) ui.banner(text); else this.time.delayedCall(120, () => { if (!this.over) this.announce(text); }); }
   later(sec, fn) { this.laterQ.push({ t: sec, fn }); }
   addWeapon(id) { const w = createWeapon(this, id); this.player.weapons.push(w); return w; }
   // ---------- Consultas espaciales ----------
@@ -141,11 +142,11 @@ export class GameScene extends Phaser.Scene {
     if (type === 'gem' && this.pickups.length > 260) { const g = this.pickups.find((q) => q.type === 'gem'); if (g) { g.v += v; this.tintGem(g); return; } }
     let q = this.pkFree.pop(); if (!q) q = { im: this.add.image(0, 0, 'gem') };
     q.type = type; q.v = v; q.x = x; q.y = y; q.mag = false; q.t = 0;
-    q.im.setTexture(type === 'gem' ? 'gem' : type).setVisible(true).setScale(type === 'chest' ? 3.4 : 2.6).clearTint();
+    q.im.setTexture(type === 'gem' ? 'gem' : type).setVisible(true).setScale(ART.scale(type, type === 'chest' ? 3.4 : 2.6)).clearTint();
     if (type === 'gem') this.tintGem(q);
     this.pickups.push(q);
   }
-  tintGem(q) { q.im.setScale(q.v >= 20 ? 4 : q.v >= 5 ? 3.4 : 2.6); if (q.v >= 20) q.im.setTint(0xffd24a); else if (q.v >= 5) q.im.setTint(0xff7aff); else if (q.v >= 2) q.im.setTint(0x7aff9a); else q.im.clearTint(); }
+  tintGem(q) { const k = ART.has.has('gem') ? 0.8 : 1; q.im.setScale((q.v >= 20 ? 4 : q.v >= 5 ? 3.4 : 2.6) * (ART.has.has('gem') ? 0.62 : 1) * k); if (q.v >= 20) q.im.setTint(0xffd24a); else if (q.v >= 5) q.im.setTint(0xff7aff); else if (q.v >= 2) q.im.setTint(0x7aff9a); else q.im.clearTint(); }
   updatePickups(dt) {
     const p = this.player;
     for (let i = this.pickups.length - 1; i >= 0; i--) {
@@ -171,9 +172,10 @@ export class GameScene extends Phaser.Scene {
   spawnPProj(c) {
     let p = this.ppFree.pop(); if (!p) p = { im: this.add.image(0, 0, c.tex), hit: [] };
     Object.assign(p, { x: c.x, y: c.y, vx: c.vx, vy: c.vy, dmg: c.dmg, pierce: c.pierce || 0, bounce: c.bounce || 0, life: c.life || 1, r: c.r || 6, spin: c.spin || 0, align: !!c.align, aoe: c.aoe || 0, aoeDmg: c.aoeDmg || 0, speed: c.speed || 0, dead: false });
-    p.hit.length = 0; p.im.setTexture(c.tex).setScale(c.scale || 2.5).setVisible(true).setAlpha(1);
+    p.hit.length = 0; p.im.setTexture(c.tex).setScale(ART.scale(c.tex, c.scale || 2.5)).setVisible(true).setAlpha(1).setFlipY(false); p.art = ART.has.has(c.tex);
     if (c.tint) p.im.setTint(c.tint); else p.im.clearTint();
-    if (p.align) p.im.setRotation(Math.atan2(p.vy, p.vx) + Math.PI / 2); else p.im.setRotation(0);
+    if (p.align) p.im.setRotation(Math.atan2(p.vy, p.vx) + (p.art ? 0 : Math.PI / 2)); else p.im.setRotation(0);
+    if (p.art && p.vx < 0) p.im.setFlipY(p.align);
     this.pprojs.push(p); return p;
   }
   killP(p) { if (p.dead) return; p.dead = true; if (p.aoe) this.explode(p.x, p.y, p.aoe, p.aoeDmg, { kb: 160, sfx: 'boom', color: 'boom' }); }
@@ -205,7 +207,7 @@ export class GameScene extends Phaser.Scene {
   spawnEBullet(c) {
     if (this.ebs.length > 260) return; let b = this.ebFree.pop(); if (!b) b = { im: this.add.image(0, 0, c.tex) };
     Object.assign(b, { x: c.x, y: c.y, vx: c.vx, vy: c.vy, dmg: c.dmg, r: c.r || 6, life: c.life || 4, spin: c.spin || 0 });
-    b.im.setTexture(c.tex).setScale(c.scale || 2.4).setVisible(true).setRotation(0); this.ebs.push(b);
+    b.im.setTexture(c.tex).setScale(ART.scale(c.tex, c.scale || 2.4)).setVisible(true).setRotation(0); this.ebs.push(b);
   }
   explode(x, y, r, dmg, o = {}) {
     this.fx.burst(o.color || 'boom', x, y, 18); this.fx.ring(x, y, r, 0xffc040, 0.25); Sfx.play(o.sfx || 'boom');

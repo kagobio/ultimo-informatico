@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { Save } from '../systems/Save.js';
 import { Sfx } from '../systems/Sfx.js';
 import { txt, button, panel, fmtTime, uiScale, FONT } from '../systems/Widgets.js';
@@ -5,7 +6,7 @@ export class UIScene extends Phaser.Scene {
   constructor() { super('UI'); }
   init(d) { this.g = d.game; }
   create() {
-    this.joy = null; this.joyId = null; this.registry.set('joy', { x: 0, y: 0 }); this.overlay = null; this.pauseOv = null; this.bannerQ = [];
+    this.joy = null; this.portrait = null; this.bannerBg = null; this.tBanner = null; this.joyId = null; this.registry.set('joy', { x: 0, y: 0 }); this.overlay = null; this.pauseOv = null; this.bannerQ = [];
     this.gfx = this.add.graphics(); this.jg = this.add.graphics().setDepth(5);
     this.tTime = txt(this, 0, 0, '00:00', 26); this.tHp = txt(this, 0, 0, '', 13); this.tLv = txt(this, 0, 0, '', 14, '#ffd24a', { ox: 0 });
     this.tDmg = txt(this, 0, 0, '', 12, '#ffffff', { ox: 0 }); this.tBoss = txt(this, 0, 0, '', 13, '#ff8a8a'); this.tBanner = txt(this, 0, 0, '', 24, '#ffd24a').setAlpha(0).setDepth(20);
@@ -20,21 +21,41 @@ export class UIScene extends Phaser.Scene {
   }
   layout() {
     const W = this.scale.width, H = this.scale.height, u = this.u = uiScale(this);
-    this.tTime.setPosition(W / 2, 30 * u).setFontSize(26 * u); this.tLv.setPosition(10 * u, 24 * u).setFontSize(14 * u);
-    this.tHp.setFontSize(12 * u); this.tDmg.setPosition(10 * u, 84 * u).setFontSize(12 * u); this.tBoss.setPosition(W / 2, 128 * u).setFontSize(13 * u);
+    this.tTime.setPosition(W / 2, 34 * u).setFontSize(22 * u); this.tLv.setPosition(58 * u, 25 * u).setFontSize(13 * u);
+    this.tHp.setFontSize(12 * u); this.tDmg.setPosition(14 * u, 92 * u).setFontSize(12 * u); this.tBoss.setPosition(W / 2, 128 * u).setFontSize(13 * u);
     this.tBanner.setPosition(W / 2, H * 0.28).setFontSize(24 * u).setWordWrapWidth(W - 20); this.pauseBtn.setPosition(W - 28 * u, 26 * u).setSize(40 * u, 40 * u); this.pauseTxt.setPosition(W - 28 * u, 26 * u).setFontSize(16 * u);
   }
-  banner(s) { this.tBanner.setText(s).setAlpha(1); this.tweens.killTweensOf(this.tBanner); this.tweens.add({ targets: this.tBanner, alpha: 0, delay: 1800, duration: 600 }); }
+  banner(s) {
+    if (!this.bannerBg) this.bannerBg = this.add.rectangle(0, 0, 10, 10, 0x0b1020, 0.82).setStrokeStyle(3, 0xffd24a).setDepth(19);
+    this.tBanner.setText(s).setAlpha(1).setColor('#ffffff'); const bb = this.tBanner.getBounds();
+    this.bannerBg.setPosition(this.tBanner.x, this.tBanner.y).setSize(bb.width + 28, bb.height + 18).setAlpha(1).setVisible(true);
+    this.tweens.killTweensOf(this.tBanner); this.tweens.killTweensOf(this.bannerBg);
+    this.tweens.add({ targets: [this.tBanner, this.bannerBg], alpha: 0, delay: 1800, duration: 500 });
+  }
   update() {
     const g = this.g, p = g.player, W = this.scale.width, u = this.u, gf = this.gfx; if (!p) return; gf.clear();
-    gf.fillStyle(0x000000, 0.55).fillRect(0, 0, W, 10 * u); gf.fillStyle(0x34e6ff, 1).fillRect(0, 0, W * (p.xp / p.xpNext), 10 * u);
-    const hx = 10 * u, hy = 40 * u, hw = 130 * u, hh = 14 * u; gf.fillStyle(0x000000, 0.6).fillRect(hx - 2, hy - 2, hw + 4, hh + 4); gf.fillStyle(0x6a1a22, 1).fillRect(hx, hy, hw, hh); gf.fillStyle(p.hp / p.maxHp < 0.3 ? 0xff3030 : 0x3ddc6a, 1).fillRect(hx, hy, hw * (p.hp / p.maxHp), hh);
-    this.tHp.setPosition(hx + hw / 2, hy + hh / 2).setText(Math.ceil(p.hp) + ' / ' + Math.round(p.maxHp)); this.tLv.setText('NV ' + p.level);
+    // XP (barra superior redondeada)
+    const xw = W - 16 * u, xr = Phaser.Math.Clamp(p.xp / p.xpNext, 0, 1);
+    gf.fillStyle(0x0a1020, 0.7).fillRoundedRect(8 * u, 5 * u, xw, 11 * u, 5 * u);
+    if (xr > 0.01) { gf.fillGradientStyle(0x34e6ff, 0x34e6ff, 0x3b7bff, 0x3b7bff, 1).fillRoundedRect(9 * u, 6 * u, Math.max(10 * u, (xw - 2 * u) * xr), 9 * u, 4 * u); gf.fillStyle(0xffffff, 0.35).fillRoundedRect(12 * u, 7 * u, Math.max(6 * u, (xw - 8 * u) * xr), 2.5 * u, 1); }
+    gf.lineStyle(2, 0x9fd0ff, 0.9).strokeRoundedRect(8 * u, 5 * u, xw, 11 * u, 5 * u);
+    // Retrato + vida
+    const hx = 58 * u, hy = 40 * u, hw = 86 * u, hh = 18 * u, low = p.hp / p.maxHp < 0.3, hr = Phaser.Math.Clamp(p.hp / p.maxHp, 0, 1);
+    gf.fillStyle(0x0a1020, 0.75).fillRoundedRect(8 * u, 22 * u, hx + hw - 2 * u, 52 * u, 14 * u).lineStyle(2, 0x9fd0ff, 0.9).strokeRoundedRect(8 * u, 22 * u, hx + hw - 2 * u, 52 * u, 14 * u);
+    gf.fillStyle(0x1b2850, 1).fillCircle(34 * u, 48 * u, 21 * u).lineStyle(3, 0xffd24a, 1).strokeCircle(34 * u, 48 * u, 21 * u);
+    gf.fillStyle(0x3a0f18, 1).fillRoundedRect(hx, hy, hw, hh, 9 * u);
+    if (hr > 0.01) { gf.fillGradientStyle(low ? 0xff6a5a : 0x7dff8a, low ? 0xff6a5a : 0x7dff8a, low ? 0xc01818 : 0x1fb04a, low ? 0xc01818 : 0x1fb04a, 1).fillRoundedRect(hx, hy, Math.max(12 * u, hw * hr), hh, 9 * u); gf.fillStyle(0xffffff, 0.3).fillRoundedRect(hx + 4 * u, hy + 2 * u, Math.max(6 * u, hw * hr - 8 * u), 4 * u, 2); }
+    gf.lineStyle(2, 0x0a1020, 1).strokeRoundedRect(hx, hy, hw, hh, 9 * u);
+    if (!this.portrait) this.portrait = this.add.image(0, 0, p.texKey + '_0').setDepth(2);
+    this.portrait.setTexture(p.texKey + '_0'); const pi = this.textures.get(p.texKey + '_0').getSourceImage(); this.portrait.setPosition(34 * u, 48 * u).setScale(Math.min(34 * u / pi.width, 38 * u / pi.height) * (ART.has.has(p.texKey) ? 1.15 : 1)).setCrop(0, 0, pi.width, pi.height * 0.62);
+    gf.fillStyle(0x0a1020, 0.7).fillRoundedRect(W / 2 - 46 * u, 18 * u, 92 * u, 32 * u, 14 * u).lineStyle(2, 0x9fd0ff, 0.9).strokeRoundedRect(W / 2 - 46 * u, 18 * u, 92 * u, 32 * u, 14 * u);
+    gf.fillStyle(0x0a1020, 0.55).fillRoundedRect(8 * u, 78 * u, 104 * u, 34 * u, 10 * u);
+    this.tHp.setPosition(hx + hw / 2, hy + hh / 2 + 1).setText(Math.ceil(p.hp) + ' / ' + Math.round(p.maxHp)); this.tLv.setText('NV ' + p.level);
     this.tTime.setText(fmtTime(g.t)); this.tDmg.setText('DAÑO ' + Math.round(p.damageDealt).toLocaleString('es-ES') + '\nBAJAS ' + g.kills);
     const b = g.bosses[0]; if (b && !b.dead) { const bw = Math.min(W * 0.7, 360 * u), bx = W / 2 - bw / 2, by = 140 * u; gf.fillStyle(0x000000, 0.7).fillRect(bx - 2, by - 2, bw + 4, 14 * u + 4); gf.fillStyle(0xd02030, 1).fillRect(bx, by, bw * Math.max(0, b.hp / b.maxHp), 14 * u); this.tBoss.setText(b.def.name).setVisible(true); } else this.tBoss.setVisible(false);
     // iconos de armas
     const ws = p.weapons; while (this.wIcons.length < ws.length) this.wIcons.push({ im: this.add.image(0, 0, 'gem'), t: txt(this, 0, 0, '', 11, '#ffd24a') });
-    this.wIcons.forEach((o, i) => { const w = ws[i]; o.im.setVisible(!!w); o.t.setVisible(!!w); if (!w) return; const x = 24 * u + i * 38 * u, y = this.scale.height - 28 * u; o.im.setTexture(w.def.icon).setPosition(x, y).setScale(2.4 * u).setAlpha(w.blocked ? 0.3 : 1); o.t.setPosition(x + 10 * u, y + 14 * u).setText(w.evolved ? '★' : String(w.level)); });
+    this.wIcons.forEach((o, i) => { const w = ws[i]; o.im.setVisible(!!w); o.t.setVisible(!!w); if (!w) return; const x = 24 * u + i * 38 * u, y = this.scale.height - 28 * u; o.im.setTexture(w.def.icon).setPosition(x, y).setScale(ART.fitS(this, w.def.icon, 30 * u, 2.4 * u)).setAlpha(w.blocked ? 0.3 : 1); o.t.setPosition(x + 10 * u, y + 14 * u).setText(w.evolved ? '★' : String(w.level)); });
     const jg = this.jg; jg.clear(); if (this.joy && this.joyId !== null) { const o = this.registry.get('joy'); const ox = this.joy.x - o.x * 52 * u, oy = this.joy.y - o.y * 52 * u; jg.lineStyle(3, 0xffffff, 0.5).strokeCircle(ox, oy, 52 * u); jg.fillStyle(0xffffff, 0.12).fillCircle(ox, oy, 52 * u); jg.fillStyle(0x7fd4ff, 0.6).fillCircle(this.joy.x, this.joy.y, 22 * u); }
   }
   showLevelUp(choices, cb) {
@@ -47,7 +68,7 @@ export class UIScene extends Phaser.Scene {
       const x = land ? W / 2 + (i - (n - 1) / 2) * (cw + 14) : W / 2, y = land ? H * 0.52 : H * 0.2 + (i + 0.5) * (ch + 10) + 20 * u;
       const col = c.kind === 'evo' ? 0xffd24a : c.kind === 'weapon' || c.kind === 'new' ? 0x7fd4ff : c.kind === 'passive' ? 0xff9ad0 : 0x7aff9a;
       const bg = this.add.rectangle(x, y, cw, ch, 0x16233f, 0.98).setStrokeStyle(4, col).setInteractive({ useHandCursor: true });
-      const ic = this.add.image(land ? x : x - cw / 2 + 42 * u, land ? y - ch * 0.28 : y, c.icon).setScale(4.2 * u);
+      const ic = this.add.image(land ? x : x - cw / 2 + 42 * u, land ? y - ch * 0.28 : y, c.icon).setScale(ART.fitS(this, c.icon, 52 * u, 4.2 * u));
       const tag = txt(this, land ? x : x + cw / 2 - 8 * u, land ? y - ch / 2 + 14 * u : y - ch / 2 + 12 * u, c.tag + '  [' + (i + 1) + ']', 10 * u, '#' + col.toString(16).padStart(6, '0'), { ox: land ? 0.5 : 1 });
       const tt = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.02 : y - 12 * u, c.title, 15 * u, '#ffffff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u } }, ox: land ? 0.5 : 0.5 });
       const dd = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.28 : y + 18 * u, c.desc, 11 * u, '#cfe3ff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u }, strokeThickness: 2 } });

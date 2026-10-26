@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { Save } from '../systems/Save.js';
 import { Sfx } from '../systems/Sfx.js';
 import { CHARACTERS, WEAPONS, MAPS, SKINS, META_UPS } from '../data/content.js';
@@ -20,11 +21,11 @@ export class ShopScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height, u = uiScale(this), cx = W / 2, s = this.s;
     txt(this, cx, 26 * u, 'TIENDA DE SOPORTE', 24 * u, '#c9a0ff'); txt(this, cx, 54 * u, '⭐ ' + s.points + ' Puntos de Soporte', 16 * u, '#ffd24a');
     const tw = Math.min(W / 5 - 4, 96 * u);
-    TABS.forEach(([k, l], i) => { const b = button(this, cx + (i - 2) * (tw + 4), 92 * u, tw, 34 * u, l, () => { this.tab = k; this.page = 0; this.rebuild(); }, { size: Math.min(11 * u, tw / 7.5), fill: this.tab === k ? 0x9a5be8 : 0x253255 }); });
+    TABS.forEach(([k, l], i) => { const b = button(this, cx + (i - 2) * (tw + 4), 92 * u, tw, 34 * u, l, () => { this.tab = k; this.page = 0; this.rebuild(); }, { size: Math.min(11 * u, tw / 9.2), fill: this.tab === k ? 0x9a5be8 : 0x253255 }); });
     const rowH = 66 * u, top = 128 * u, per = Math.max(2, Math.floor((H - top - 70 * u) / rowH)), all = this.items(), pages = Math.ceil(all.length / per); this.page = Math.min(this.page, pages - 1);
     all.slice(this.page * per, this.page * per + per).forEach((it, i) => {
       const y = top + i * rowH + rowH / 2, pw = Math.min(W - 16, 480 * u); panel(this, cx, y, pw, rowH - 6 * u, { fill: 0x141d3a });
-      this.add.image(cx - pw / 2 + 30 * u, y, it.icon).setScale(Math.min(3.2 * u, (rowH - 16 * u) / (this.textures.get(it.icon).getSourceImage().height / 4)));
+      this.add.image(cx - pw / 2 + 30 * u, y, it.icon).setScale(ART.is(it.icon) ? ART.fitS(this, it.icon, 38 * u, 1) : Math.min(3.2 * u, (rowH - 16 * u) / (this.textures.get(it.icon).getSourceImage().height / 4)));
       txt(this, cx - pw / 2 + 62 * u, y - 12 * u, it.name, 14 * u, '#ffffff', { ox: 0, style: { wordWrap: { width: pw - 190 * u } } }); txt(this, cx - pw / 2 + 62 * u, y + 12 * u, it.desc, 10 * u, '#9fb8e8', { ox: 0, style: { wordWrap: { width: pw - 190 * u }, strokeThickness: 2 } });
       const bx = cx + pw / 2 - 52 * u;
       if (it.own && it.equip) { const b = button(this, bx, y, 92 * u, 40 * u, it.sel ? '✔ EN USO' : 'USAR', () => { it.equip(); Save.write(); this.rebuild(); }, { size: 13 * u, fill: it.sel ? 0x2a7a46 : 0x1f6feb }); b.setEnabled(!it.sel); }

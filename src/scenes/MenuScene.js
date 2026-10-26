@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { Save } from '../systems/Save.js';
 import { Sfx } from '../systems/Sfx.js';
 import { CHARACTERS, MAPS, WEAPONS } from '../data/content.js';
@@ -24,14 +25,14 @@ export class MenuScene extends Phaser.Scene {
     if (!s.unlockedChars.includes(s.char)) s.char = 'tecnico'; if (!s.unlockedMaps.includes(s.map)) s.map = 'oficina';
     const ch = CHARACTERS[s.char];
     const skinTex = s.char === 'tecnico' && s.skin !== 'clasico' ? 'p_' + s.skin : ch.tex;
-    const spr = this.add.image(cx, cy - 6 * u, skinTex + '_0').setScale(5.5 * u); this.tweens.add({ targets: spr, y: spr.y - 6, yoyo: true, repeat: -1, duration: 500 });
+    const spr = this.add.image(cx, cy + 34 * u, skinTex + '_0').setOrigin(0.5, 1).setScale(ART.scale(skinTex, 5.5) * (ART.has.has(skinTex) ? 1.8 : 1) * u); this.tweens.add({ targets: spr, y: spr.y - 6, yoyo: true, repeat: -1, duration: 500 }); spr.setData('y0', spr.y);
     this.time.addEvent({ delay: 280, loop: true, callback: () => spr.setTexture(skinTex + (spr.texture.key.endsWith('_0') ? '_1' : '_0')) });
-    this.add.image(cx, cy + 56 * u, 'shadow').setScale(5 * u).setDepth(-1);
-    txt(this, cx, cy + 74 * u, ch.name, 18 * u, '#ffd24a'); txt(this, cx, cy + 94 * u, ch.desc + '  ·  ' + WEAPONS[ch.weapon].name, 11 * u, '#cfe3ff');
+    this.add.image(cx, cy + 34 * u, 'shadow').setScale(1.9 * u).setDepth(-1);
+    txt(this, cx, cy + 62 * u, ch.name, 18 * u, '#ffd24a'); txt(this, cx, cy + 84 * u, ch.desc + '  ·  ' + WEAPONS[ch.weapon].name, 11 * u, '#cfe3ff');
     const arrow = (x, y, l, cb) => button(this, x, y, 46 * u, 46 * u, l, cb, { size: 24 * u });
     const chars = this.unlockedChars(), maps = this.unlockedMaps();
-    arrow(cx - 120 * u, cy, '◀', () => { s.char = this.cycle(chars, s.char, -1); Save.write(); this.rebuild(); });
-    arrow(cx + 120 * u, cy, '▶', () => { s.char = this.cycle(chars, s.char, 1); Save.write(); this.rebuild(); });
+    arrow(cx - 120 * u, cy - 20 * u, '◀', () => { s.char = this.cycle(chars, s.char, -1); Save.write(); this.rebuild(); });
+    arrow(cx + 120 * u, cy - 20 * u, '▶', () => { s.char = this.cycle(chars, s.char, 1); Save.write(); this.rebuild(); });
     // Mapa
     const my = cy + 138 * u; const mp = MAPS[s.map];
     panel(this, cx, my, 214 * u, 46 * u, { fill: 0x16233f }); txt(this, cx, my - 8 * u, mp.name, 16 * u, '#ffffff'); txt(this, cx, my + 12 * u, mp.blurb, 10 * u, '#9fb8e8');
