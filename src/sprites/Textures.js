@@ -101,15 +101,47 @@ export function buildTextures(scene) {
   make(scene, 'i_star', 12, 12, (R) => { R(5, 0, 2, 12, '#ffd24a'); R(0, 5, 12, 2, '#ffd24a'); R(3, 3, 6, 6, '#fff3c4'); });
   // Props isométricos
   const box = (w, h, top, side, dark) => (R, g) => { g.fillStyle = K; g.fillRect(0, 0, w, h); R(1, 1, w - 2, h - 2, side); R(1, 1, w - 2, Math.floor(h * 0.4), top); R(1, h - 3, w - 2, 2, dark); };
-  make(scene, 'prop_desk', 28, 18, (R) => { R(0, 3, 28, 15, K); R(1, 4, 26, 5, '#c9a46a'); R(1, 9, 26, 8, '#8a6a3a'); R(3, 0, 10, 5, K); R(4, 1, 8, 4, '#7fd4ff'); R(6, 5, 4, 1, K); R(16, 2, 8, 3, '#222'); R(17, 3, 6, 1, '#555'); R(3, 11, 4, 5, '#6a4a22'); R(21, 11, 4, 5, '#6a4a22'); });
-  make(scene, 'prop_rack', 18, 34, (R) => { R(0, 0, 18, 34, K); R(1, 1, 16, 32, '#2a3050'); for (let i = 0; i < 6; i++) { R(2, 2 + i * 5, 14, 4, '#3d4670'); R(3, 3 + i * 5, 2, 2, i % 2 ? '#5df28a' : '#ffd24a'); R(7, 3 + i * 5, 8, 1, '#1a2040'); } });
-  make(scene, 'prop_printer', 22, 16, (R) => { R(0, 4, 22, 12, K); R(1, 5, 20, 10, '#c8ccd8'); R(3, 1, 16, 4, K); R(4, 2, 14, 3, '#fff'); R(3, 8, 16, 3, '#8a90a0'); R(16, 11, 3, 2, '#0c0'); });
-  make(scene, 'prop_plant', 12, 20, (R) => { R(3, 12, 6, 8, K); R(4, 13, 4, 6, '#b05a2a'); R(0, 2, 12, 11, K); R(1, 3, 10, 9, '#2fb24a'); R(3, 3, 3, 4, '#6af08a'); R(6, 7, 4, 3, '#1a7a30'); });
-  make(scene, 'prop_cooler', 12, 24, (R) => { R(0, 0, 12, 24, K); R(1, 1, 10, 10, '#7fd4ff'); R(2, 2, 3, 6, '#d4f4ff'); R(1, 11, 10, 12, '#e8eaf2'); R(4, 14, 4, 2, '#3b78e0'); });
-  make(scene, 'prop_box', 16, 14, box(16, 14, '#d9b27a', '#b88a50', '#8a6a3a'));
+  // Props isométricos reales: cajas con cara superior en rombo y dos caras laterales
+  const poly = (g, pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fill(); g.strokeStyle = K; g.lineWidth = 1; g.stroke(); };
+  // base: vértice inferior en (cx, by); a = semiancho; h = altura
+  const ib = (g, cx, by, a, h, top, left, right, ox = 0, oy = 0) => {
+    const x = cx + ox, b = by - oy, t = b - h, m = a / 2;
+    poly(g, [[x - a, b - m], [x, b], [x, b - h], [x - a, b - m - h]], left);
+    poly(g, [[x + a, b - m], [x, b], [x, b - h], [x + a, b - m - h]], right);
+    poly(g, [[x, t - a], [x + a, t - m], [x, t], [x - a, t - m]], top);
+  };
+  const isoProp = (key, w, h, fn) => make(scene, key, w, h, (R, g) => { g.lineJoin = 'miter'; fn(g, w / 2, h - 1, R); });
+  isoProp('prop_desk', 34, 36, (g, cx, by) => {
+    ib(g, cx, by, 15, 9, '#d9b57a', '#8a6a3a', '#a98250');
+    ib(g, cx, by, 3, 3, '#3a3f55', '#2a2f40', '#2a2f40', 6, 9 + 1);
+    ib(g, cx, by, 5, 8, '#2b3350', '#1c2236', '#7fd4ff', -4, 9 + 4);
+  });
+  isoProp('prop_rack', 20, 46, (g, cx, by) => {
+    ib(g, cx, by, 9, 34, '#4a5478', '#262c48', '#39426a');
+    for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? '#5df28a' : '#ffd24a'; g.fillRect(cx + 2, by - 31 + i * 5 + (9 / 2) * 0, 2, 2); g.fillStyle = '#6f7ab0'; g.fillRect(cx + 5, by - 31 + i * 5 + 1, 2, 1); g.fillStyle = '#7d89c0'; g.fillRect(cx - 8, by - 31 + i * 5 + 2, 6, 1); }
+  });
+  isoProp('prop_printer', 28, 26, (g, cx, by) => {
+    ib(g, cx, by, 12, 10, '#e6e9f2', '#a7adbe', '#c8ccd8');
+    ib(g, cx, by, 5, 2, '#ffffff', '#cfd4e2', '#cfd4e2', 0, 10 + 1);
+    g.fillStyle = '#2fe060'; g.fillRect(cx + 5, by - 7, 2, 2); g.fillStyle = '#3a3f55'; g.fillRect(cx + 2, by - 5, 7, 1);
+  });
+  isoProp('prop_plant', 18, 30, (g, cx, by) => {
+    ib(g, cx, by, 6, 7, '#c0703a', '#8a4a22', '#a85c2e');
+    g.fillStyle = K; g.beginPath(); g.ellipse(cx, by - 15, 8, 8, 0, 0, 7); g.fill(); g.fillStyle = '#2fb24a'; g.beginPath(); g.ellipse(cx, by - 15, 7, 7, 0, 0, 7); g.fill(); g.fillStyle = '#6af08a'; g.beginPath(); g.ellipse(cx - 2, by - 17, 3, 3, 0, 0, 7); g.fill();
+  });
+  isoProp('prop_cooler', 18, 40, (g, cx, by) => {
+    ib(g, cx, by, 7, 18, '#f4f6fb', '#aab2c6', '#d6dbe8');
+    ib(g, cx, by, 5, 10, '#bfe9ff', '#7fd4ff', '#a9e2ff', 0, 18);
+    g.fillStyle = '#3b78e0'; g.fillRect(cx + 2, by - 11, 3, 2);
+  });
+  isoProp('prop_box', 22, 22, (g, cx, by) => { ib(g, cx, by, 9, 9, '#e3c08a', '#a67c44', '#c49a5c'); g.fillStyle = '#7a5a30'; g.fillRect(cx - 1, by - 15, 2, 6); });
+  isoProp('prop_table', 44, 26, (g, cx, by) => {
+    ib(g, cx, by, 20, 5, '#ece4d0', '#8a7a5a', '#a89874');
+    ib(g, cx, by, 3, 3, '#7fd4ff', '#4a90b8', '#4a90b8', -8, 6);
+    ib(g, cx, by, 3, 3, '#ffd24a', '#c9a020', '#c9a020', 8, 7);
+  });
+  isoProp('prop_pillar', 16, 52, (g, cx, by) => { ib(g, cx, by, 7, 44, '#b6bcd0', '#6a7090', '#8a90a8'); ib(g, cx, by, 8, 4, '#c8cddc', '#555a70', '#6a7090'); });
   make(scene, 'prop_cable', 22, 8, (R) => { R(0, 3, 22, 3, K); R(1, 4, 20, 1, '#2a7bff'); R(4, 1, 2, 3, K); });
-  make(scene, 'prop_table', 30, 18, (R) => { R(0, 0, 30, 18, K); R(1, 1, 28, 10, '#d8d0c0'); R(1, 11, 28, 6, '#8a7a5a'); R(6, 3, 6, 4, '#7fd4ff'); R(16, 4, 8, 3, '#ffd24a'); });
-  make(scene, 'prop_pillar', 14, 40, (R) => { R(0, 0, 14, 40, K); R(1, 1, 12, 38, '#8a90a8'); R(1, 1, 5, 38, '#b6bcd0'); R(0, 34, 14, 6, '#555a70'); });
   make(scene, 'prop_lamp', 8, 30, (R) => { R(3, 6, 2, 24, K); R(0, 0, 8, 7, K); R(1, 1, 6, 5, '#fff3a0'); });
   make(scene, 'icon_app', 32, 32, (R) => { R(0, 0, 32, 32, '#0b1020'); R(2, 2, 28, 28, '#7fd4ff'); R(4, 4, 24, 24, '#16233f'); R(8, 8, 16, 12, '#2f6fe0'); R(9, 9, 14, 8, '#7fd4ff'); R(12, 22, 8, 2, '#c9d2e8'); R(11, 12, 10, 2, '#16233f'); });
 }
