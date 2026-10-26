@@ -92,7 +92,7 @@ export function buildTextures(scene) {
   make(scene, 'coffee', 9, 10, (R) => { R(0, 2, 7, 8, K); R(1, 3, 5, 6, '#fff'); R(1, 3, 5, 2, '#7a4a2a'); R(6, 4, 3, 4, K); R(7, 5, 1, 2, '#fff'); R(2, 0, 1, 2, '#ddd'); R(4, 0, 1, 2, '#ddd'); });
   make(scene, 'chip', 8, 8, (R) => { R(0, 0, 8, 8, K); R(1, 1, 6, 6, '#ffd24a'); R(3, 3, 2, 2, '#a07000'); });
   make(scene, 'chest', 14, 12, (R) => { R(0, 2, 14, 10, K); R(1, 3, 12, 8, '#d0802a'); R(1, 3, 12, 3, '#f0a64a'); R(6, 5, 2, 4, '#ffd24a'); R(0, 6, 14, 1, K); });
-  make(scene, 'shadow', 16, 6, (R) => { R(3, 0, 10, 6, 'rgba(0,0,0,0.35)'); R(0, 1, 16, 4, 'rgba(0,0,0,0.35)'); });
+  if (!scene.textures.exists('shadow')) { const c = document.createElement('canvas'); c.width = 64; c.height = 24; const g = c.getContext('2d'); g.translate(32, 12); g.scale(1, 0.375); const gr = g.createRadialGradient(0, 0, 4, 0, 0, 32); gr.addColorStop(0, 'rgba(0,0,0,0.5)'); gr.addColorStop(0.7, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 32, 0, 6.283); g.fill(); scene.textures.addCanvas('shadow', c); }
   make(scene, 'spark', 3, 3, (R) => { R(0, 0, 3, 3, '#fff'); });
   // Iconos de passives
   make(scene, 'i_doc', 12, 14, (R) => { R(0, 0, 12, 14, K); R(1, 1, 10, 12, '#fff3c4'); for (let i = 0; i < 5; i++) R(2, 3 + i * 2, 8, 1, '#a07000'); R(2, 2, 5, 1, '#d02030'); });
@@ -141,6 +141,7 @@ export function buildTextures(scene) {
     ib(g, cx, by, 3, 3, '#ffd24a', '#c9a020', '#c9a020', 8, 7);
   });
   isoProp('prop_pillar', 16, 52, (g, cx, by) => { ib(g, cx, by, 7, 44, '#b6bcd0', '#6a7090', '#8a90a8'); ib(g, cx, by, 8, 4, '#c8cddc', '#555a70', '#6a7090'); });
+  for (const k of ['prop_bin', 'prop_cone', 'prop_cab']) make(scene, k, 16, 20, (R) => { R(0, 0, 16, 20, K); R(1, 1, 14, 18, '#8a90a8'); });
   make(scene, 'prop_cable', 22, 8, (R) => { R(0, 3, 22, 3, K); R(1, 4, 20, 1, '#2a7bff'); R(4, 1, 2, 3, K); });
   make(scene, 'prop_lamp', 8, 30, (R) => { R(3, 6, 2, 24, K); R(0, 0, 8, 7, K); R(1, 1, 6, 5, '#fff3a0'); });
   make(scene, 'icon_app', 32, 32, (R) => { R(0, 0, 32, 32, '#0b1020'); R(2, 2, 28, 28, '#7fd4ff'); R(4, 4, 24, 24, '#16233f'); R(8, 8, 16, 12, '#2f6fe0'); R(9, 9, 14, 8, '#7fd4ff'); R(12, 22, 8, 2, '#c9d2e8'); R(11, 12, 10, 2, '#16233f'); });
