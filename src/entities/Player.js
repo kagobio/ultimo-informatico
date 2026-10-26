@@ -17,7 +17,7 @@ export class Player {
     this.x = WORLD / 2; this.y = WORLD / 2; this.r = 7; this.h = 34;
     this.invuln = 0; this.slowT = 0; this.avT = 0; this.damageDealt = 0; this.anim = 0; this.face = 1;
     const texKey = charKey === 'tecnico' && save.skin !== 'clasico' ? 'p_' + save.skin : c.tex;
-    this.texKey = texKey; if (ART.is(texKey)) this.r = 8;
+    this.texKey = texKey; if (ART.is(texKey)) this.r = 10;
     this.shadow = scene.add.image(0, 0, 'shadow').setScale(0.85);
     this.sprite = scene.add.image(0, 0, texKey + '_0').setScale(ART.scale(texKey, 3));
     this.weapons = []; this.passives = {}; this.vx = 0; this.vy = 0;
@@ -38,6 +38,8 @@ export class Player {
     const len = Math.hypot(ix, iy); if (len > 1) { ix /= len; iy /= len; }
     const sp = this.speed; this.vx = ix * sp; this.vy = iy * sp;
     this.x = Math.min(WORLD - 24, Math.max(24, this.x + this.vx * dt)); this.y = Math.min(WORLD - 24, Math.max(24, this.y + this.vy * dt));
+    // los muebles grandes bloquean al jugador (los enemigos los atraviesan)
+    const cl = this.s.colliders; if (cl) for (let i = 0; i < cl.length; i++) { const q = cl[i], dx = this.x - q[0], dy = (this.y - q[1]) * 1.8, rr = q[2] + this.r, d2 = dx * dx + dy * dy; if (d2 < rr * rr && d2 > 0.01) { const d = Math.sqrt(d2), k = (rr - d) / d; this.x += dx * k; this.y += dy * k / 1.8; } }
     if (ix < -0.1) this.face = -1; else if (ix > 0.1) this.face = 1;
     const moving = len > 0.1; if (moving) this.anim += dt * 9;
     const fr = moving ? (Math.floor(this.anim) % 2) : 0; const wf = ART.wframe(this.texKey, moving ? Math.floor(this.anim * 0.55) : 0);
