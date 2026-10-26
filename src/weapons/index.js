@@ -1,3 +1,4 @@
+import { ART } from '../sprites/Art.js';
 import { Weapon } from './Weapon.js';
 const RGB = [0xff3d6e, 0xffd24a, 0x5df28a, 0x34e6ff, 0x7a5bff, 0xff3dcb];
 class Keyboard extends Weapon {
@@ -30,7 +31,7 @@ class Ethernet extends Weapon {
   get count() { return this.evolved ? 6 : 1 + ((this.level + 1) >> 1); }
   get radius() { return ((this.evolved ? 108 : 66 + this.level * 5) * this.s.player.areaMult); }
   onChange() {
-    const need = this.count * 3; while (this.imgs.length < need) { const im = this.s.add.image(0, 0, 'p_cable').setScale(2.6); this.imgs.push(im); }
+    const need = this.count * 3; while (this.imgs.length < need) { const im = this.s.add.image(0, 0, 'p_cable').setScale(ART.scale('p_cable', 2.6)); this.imgs.push(im); }
     this.imgs.forEach((im, i) => im.setTint(this.evolved ? [0xffd24a, 0xff3dcb, 0x5df28a][i % 3] : 0xffffff));
   }
   update(dt) {
@@ -56,7 +57,7 @@ class Hammer extends Weapon {
     const s = this.s, p = s.player, e = s.nearest(p.x, p.y, 230); if (!e) return false;
     const a = Math.atan2(e.y - p.y, e.x - p.x), R = (58 + this.level * 6) * p.areaMult, d = 46;
     const cx = p.x + Math.cos(a) * d, cy = p.y + Math.sin(a) * d * 0.8;
-    const h = s.add.image(p.x + Math.cos(a) * 24, p.y - 20, 'p_hammer').setScale(3).setDepth(99999).setOrigin(0.5, 1).setRotation(-1.6);
+    const h = s.add.image(p.x + Math.cos(a) * 24, p.y - 20, 'p_hammer').setScale(ART.scale('p_hammer', 3)).setDepth(99999).setOrigin(0.5, 1).setRotation(-1.6);
     s.tweens.add({ targets: h, rotation: 0.9, duration: 190, ease: 'Cubic.easeIn', onComplete: () => h.destroy() });
     s.later(0.17, () => { s.explode(cx, cy, R, p.dmg * this.dmg(5), { kb: 380, shake: 0.006, sfx: 'hammer', color: 'dust' }); s.fx.ring(cx, cy, R, 0xffd24a, 0.3); });
     if (this.level >= 5) s.later(0.42, () => { s.explode(cx, cy, R * 1.5, p.dmg * this.dmg(2.5), { kb: 300, sfx: 'boom' }); s.fx.ring(cx, cy, R * 1.5, 0xff7a3a, 0.4); });
@@ -82,7 +83,7 @@ class PowerShell extends Weapon {
     const s = this.s, p = s.player; if (!s.enemies.length) return false;
     const n = 1 + (this.level >> 1);
     for (let i = 0; i < n && this.drones.length < 7; i++) {
-      const im = s.add.image(p.x, p.y, 'p_ps').setScale(2.8);
+      const im = s.add.image(p.x, p.y, 'p_ps').setScale(ART.scale('p_ps', 2.8));
       this.drones.push({ im, a: Math.random() * 6.28, life: 6 + this.level, z: 0.3 * i, orb: 56 + Math.random() * 50, sp: 1.6 + Math.random() });
     }
     s.sfx('ding'); return true;
