@@ -52,7 +52,7 @@ export class UIScene extends Phaser.Scene {
       const tt = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.02 : y - 12 * u, c.title, 15 * u, '#ffffff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u } }, ox: land ? 0.5 : 0.5 });
       const dd = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.28 : y + 18 * u, c.desc, 11 * u, '#cfe3ff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u }, strokeThickness: 2 } });
       let fired = false; const fire = () => { if (fired) return; fired = true; Sfx.play('click'); items.forEach((o) => o.destroy()); this.overlay = null; this.cards = null; cb(c); };
-      bg.on('pointerup', fire); this.cards.push({ fire, c }); items.push(bg, ic, tag, tt, dd);
+      bg.on('pointerup', fire); this.cards.push(location.search.includes('debug') ? { fire, c } : { fire }); items.push(bg, ic, tag, tt, dd);
     });
     items.forEach((o, i) => o.setDepth(30 + (i > 1 ? 1 : 0))); this.overlay = items;
   }
