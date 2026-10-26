@@ -44,6 +44,6 @@ export class Fx {
       g.lineTo(b.x2, b.y2); g.strokePath(); g.lineStyle(1, 0xffffff, 1); g.strokePath();
     }
     for (const t of this.dmgPool) if (t.visible) { t.life -= dt; t.y += t.vy * dt; if (t.life < 0.2) t.setAlpha(Math.max(0, t.life / 0.2)); if (t.life <= 0) t.setVisible(false); }
-    for (const o of this.says) if (o.life > 0) { o.life -= dt; if (o.ent && !o.ent.dead) { const cam = this.s.cameras.main, hw = o.t.width / 2, v = cam.worldView; o.t.setPosition(Math.max(v.x + hw + 4, Math.min(v.right - hw - 4, o.ent.x)), Math.max(v.y + 150 / cam.zoom, o.ent.y - o.ent.h - 8)); } if (o.life <= 0) o.t.setVisible(false); }
+    for (const o of this.says) if (o.life > 0) { o.life -= dt; if (o.ent && !o.ent.dead) { const cam = this.s.cameras.main, hw = o.t.width / 2, v = cam.worldView; o.t.setPosition(Math.max(v.x + hw + 4, Math.min(v.right - hw - 4, o.ent.x)), Math.max(v.y + 182 / cam.zoom, o.ent.y - o.ent.h - 8)); } if (o.life <= 0) o.t.setVisible(false); }
   }
 }
