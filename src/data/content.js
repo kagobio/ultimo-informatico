@@ -59,7 +59,7 @@ export const ENEMIES = {
   error: { name: 'Error', tex: 'e_error', hp: 8, speed: 105, dmg: 6, r: 6, xp: 0.5, ai: 'chase', from: 9999, w: 0, scale: 2.6 },
 };
 export const BOSSES = [
-  { id: 'printer', name: 'LA IMPRESORA POSEÍDA', tex: 'b_printer', hp: 1700, speed: 30, dmg: 16, r: 22, xp: 60, ai: 'bossPrinter', scale: 3.2 },
-  { id: 'server', name: 'EL SERVIDOR DE PRODUCCIÓN', tex: 'b_server', hp: 4200, speed: 20, dmg: 18, r: 20, xp: 120, ai: 'bossServer', scale: 3.4 },
-  { id: 'user', name: 'EL USUARIO QUE NUNCA REINICIA', tex: 'b_user', hp: 8500, speed: 40, dmg: 20, r: 18, xp: 300, ai: 'bossUser', scale: 5 },
+  { id: 'printer', name: 'LA IMPRESORA POSEÍDA', tex: 'b_printer', hp: 1200, speed: 30, dmg: 16, r: 22, xp: 60, ai: 'bossPrinter', scale: 3.2 },
+  { id: 'server', name: 'EL SERVIDOR DE PRODUCCIÓN', tex: 'b_server', hp: 3200, speed: 20, dmg: 18, r: 20, xp: 120, ai: 'bossServer', scale: 3.4 },
+  { id: 'user', name: 'EL USUARIO QUE NUNCA REINICIA', tex: 'b_user', hp: 6500, speed: 40, dmg: 20, r: 18, xp: 300, ai: 'bossUser', scale: 5 },
 ];
