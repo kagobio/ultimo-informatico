@@ -126,7 +126,7 @@ const AI = {
     update(e, dt, s) {
       const p = s.player, r = e.hp / e.maxHp, [dx, dy, d] = toward(e, p.x, p.y);
       const ph = r > 0.5 ? 1 : r > 0.25 ? 2 : 3;
-      if (ph !== e.phase) { e.phase = ph; s.fx.ring(e.x, e.y, 300, 0xff4040, 0.6); s.cameras.main.shake(300, 0.01); s.sfx('boss'); s.announce(ph === 2 ? 'FASE 2: «LLEVA ASÍ MESES»' : 'FASE 3: ¡FURIA DE USUARIO!'); if (ph === 3) e.permTint = 0xff9090; e.sprite.setTint(0xff9090); }
+      if (ph !== e.phase) { e.phase = ph; s.fx.ring(e.x, e.y, 300, 0xff4040, 0.6); s.cameras.main.shake(300, 0.01); s.sfx('boss'); s.announce(ph === 2 ? 'FASE 2: «LLEVA ASÍ MESES»' : 'FASE 3: ¡FURIA DE USUARIO!'); s.bossFx(e, ph === 2 ? 0xff9a40 : 0xff2a3a); e.spinT = 0; e.radT = 2; e.dashT = 3; if (ph === 3) e.permTint = 0xff9090; e.sprite.setTint(0xff9090); }
       move(e, dt, s, dx, dy, e.speed * (ph === 1 ? 1 : ph === 2 ? 1.3 : 1.55));
       e.sayT -= dt; e.waveT -= dt;
       if (e.sayT <= 0) {
@@ -141,6 +141,8 @@ const AI = {
         s.sfx('mail');
       }
       if (e.waveT <= 0 && d < 150) { e.waveT = 3; s.addZone({ x: e.x, y: e.y, r: 125, delay: 0.6, dmg: 18, color: 0xff6040, boom: 'dust' }); }
+      if (ph >= 2) { e.radT -= dt; if (e.radT <= 0) { e.radT = ph === 2 ? 3.4 : 2.6; s.fx.say(e, ph === 2 ? 'ESCALADO A N2' : 'ESCALADO A N3', 1.2, 14); const n = ph === 2 ? 16 : 22; ring(e, s, n, 'p_ticket', 150, 9, 0, { life: 5, spin: 4 }); s.later(0.35, () => { if (!e.dead) ring(e, s, n, 'p_ticket', 170, 9, 3.14 / n, { life: 5, spin: 4 }); }); } }
+      if (ph === 3) { e.spinT = (e.spinT || 0) - dt; if (e.spinT <= 0) { e.spinT = 0.18; e.spA = (e.spA || 0) + 0.55; ring(e, s, 2, 'p_blue', 130, 8, e.spA, { life: 5 }); } e.dashT -= dt; if (e.dashT <= 0) { e.dashT = 4.5; s.fx.say(e, '¡URGENTE!', 1.2, 18); s.addZone({ x: p.x, y: p.y, r: 80, delay: 0.9, dmg: 24, color: 0xff2a3a, boom: 'boom' }); for (const o of [-120, 120]) s.addZone({ x: p.x + o, y: p.y, r: 70, delay: 1.1, dmg: 24, color: 0xff2a3a, boom: 'boom' }); } }
       if (ph === 3) { e.fanT -= dt; if (e.fanT <= 0) { e.fanT = 2.2; for (let i = -3; i <= 3; i++) aimed(e, s, 'p_ticket', 180, 9, i * 0.17, { life: 4, spin: 5 }); } }
     },
   },
