@@ -24,7 +24,8 @@ export class Player {
   }
   static need(l) { return Math.round(4 + 2.4 * l + 0.1 * l * l); }
   get dmg() { return this.baseDmg * this.dmgMult * (this.avT > 0 ? 0.7 : 1); }
-  get speed() { return this.speedBase * this.speedMult * PLAYER_SPEED_K * (this.slowT > 0 ? 0.72 : 1); }
+  get speed() { return this.speedBase * this.speedMult * PLAYER_SPEED_K * (this.slowT > 0 ? 0.72 : 1) * ((this.boostT || 0) > 0 ? 1.3 : 1); }
+  dash() { if ((this.dashCd || 0) > 0 || (this.dashT || 0) > 0 || this.s.over || this.s.paused) return false; const dx = this.lx || this.face, dy = this.ly || 0, l = Math.hypot(dx, dy) || 1; this.dx = dx / l; this.dy = dy / l; this.dashT = 0.2; this.dashCd = 1.5; this.invuln = Math.max(this.invuln, 0.32); this.s.sfx('zap'); this.s.fx.burst('digital', this.x, this.y, 14); this.s.fx.ring(this.x, this.y, 46, 0x7fd4ff, 0.25); return true; }
   heal(n) { this.hp = Math.min(this.maxHp, this.hp + n); }
   takeDamage(n, quiet) {
     if (this.invuln > 0 || this.s.over) return false;
@@ -36,7 +37,9 @@ export class Player {
   }
   update(dt, ix, iy) {
     const len = Math.hypot(ix, iy); if (len > 1) { ix /= len; iy /= len; }
-    const sp = this.speed; this.vx = ix * sp; this.vy = iy * sp;
+    this.dashCd = (this.dashCd || 0) - dt; this.boostT = (this.boostT || 0) - dt; if (len > 0.2) { this.lx = ix; this.ly = iy; }
+    let sp = this.speed; this.vx = ix * sp; this.vy = iy * sp;
+    if ((this.dashT || 0) > 0) { this.dashT -= dt; this.vx = this.dx * 560; this.vy = this.dy * 560; this.invuln = Math.max(this.invuln, 0.1); if (Math.random() < 0.7) this.s.fx.trail(this.x, this.y + 6, 0x7fd4ff); }
     this.x = Math.min(WORLD - 24, Math.max(24, this.x + this.vx * dt)); this.y = Math.min(WORLD - 24, Math.max(24, this.y + this.vy * dt));
     // los muebles grandes bloquean al jugador y a los enemigos terrestres
     this.s.world.push(this, this.r, 34);
