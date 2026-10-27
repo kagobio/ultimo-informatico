@@ -41,20 +41,20 @@ export const META_UPS = {
   magnet: { name: 'Imán +10%', per: 0.1, max: 8, base: 12, desc: 'Radio de recogida' },
 };
 export const MAPS = {
-  oficina: { name: 'Oficina Corporativa', cost: 0, layout: 'office', floor: 0x5a6a9a, bg: '#060912', diff: 1.0, density: 1.0, bossAt: [200, 440, 690], props: ['prop_desk', 'prop_plant', 'prop_cooler', 'prop_box', 'prop_table', 'prop_printer', 'prop_bin', 'prop_cone', 'prop_cab'], weights: {}, blurb: 'Tu planta de siempre. Nivel de caos: medio.' },
-  cpd: { name: 'CPD', cost: 40, floor: 0x6fe0e8, bg: '#0a1224', diff: 1.2, density: 1.05, bossAt: [200, 440, 690], props: ['prop_rack', 'prop_rack', 'prop_box', 'prop_cable', 'prop_pillar'], weights: { email: 1.6, av: 1.5 }, blurb: 'Racks, cables y antivirus rebeldes.' },
-  impresoras: { name: 'Planta de Impresoras', cost: 80, floor: 0xffc884, bg: '#2a1e1c', diff: 1.4, density: 1.1, bossAt: [200, 440, 690], props: ['prop_printer', 'prop_printer', 'prop_box', 'prop_pillar', 'prop_plant'], weights: { printer: 2.6 }, blurb: 'Papel por todas partes. Mucha impresora.' },
-  openspace: { name: 'Open Space del Caos', cost: 140, floor: 0x9ae8a4, bg: '#17261f', diff: 1.6, density: 1.2, bossAt: [210, 470, 740], props: ['prop_desk', 'prop_desk', 'prop_table', 'prop_plant', 'prop_cooler', 'prop_lamp'], weights: { consult: 2.2, pm: 1.8 }, blurb: 'Consultores y jefes de proyecto sin parar.' },
-  global: { name: 'Centro de Soporte Global', cost: 220, floor: 0xc59aff, bg: '#1a1233', diff: 1.9, density: 1.3, bossAt: [230, 500, 800], props: ['prop_desk', 'prop_rack', 'prop_printer', 'prop_pillar', 'prop_lamp', 'prop_table'], weights: { email: 1.4, printer: 1.3, av: 1.3, consult: 1.4, pm: 1.4 }, blurb: 'Todo a la vez. Solo para veteranos.' },
+  oficina: { name: 'Oficina Corporativa', cost: 0, layout: 'office', floor: 0x5a6a9a, bg: '#060912', diff: 1.0, density: 1.0, bossAt: [140, 330, 520], props: ['prop_desk', 'prop_plant', 'prop_cooler', 'prop_box', 'prop_table', 'prop_printer', 'prop_bin', 'prop_cone', 'prop_cab'], weights: {}, blurb: 'Tu planta de siempre. Nivel de caos: medio.' },
+  cpd: { name: 'CPD', cost: 40, floor: 0x6fe0e8, bg: '#0a1224', diff: 1.2, density: 1.05, bossAt: [140, 330, 520], props: ['prop_rack', 'prop_rack', 'prop_box', 'prop_cable', 'prop_pillar'], weights: { email: 1.6, av: 1.5 }, blurb: 'Racks, cables y antivirus rebeldes.' },
+  impresoras: { name: 'Planta de Impresoras', cost: 80, floor: 0xffc884, bg: '#2a1e1c', diff: 1.4, density: 1.1, bossAt: [140, 330, 520], props: ['prop_printer', 'prop_printer', 'prop_box', 'prop_pillar', 'prop_plant'], weights: { printer: 2.6 }, blurb: 'Papel por todas partes. Mucha impresora.' },
+  openspace: { name: 'Open Space del Caos', cost: 140, floor: 0x9ae8a4, bg: '#17261f', diff: 1.6, density: 1.2, bossAt: [150, 350, 550], props: ['prop_desk', 'prop_desk', 'prop_table', 'prop_plant', 'prop_cooler', 'prop_lamp'], weights: { consult: 2.2, pm: 1.8 }, blurb: 'Consultores y jefes de proyecto sin parar.' },
+  global: { name: 'Centro de Soporte Global', cost: 220, floor: 0xc59aff, bg: '#1a1233', diff: 1.9, density: 1.3, bossAt: [165, 380, 600], props: ['prop_desk', 'prop_rack', 'prop_printer', 'prop_pillar', 'prop_lamp', 'prop_table'], weights: { email: 1.4, printer: 1.3, av: 1.3, consult: 1.4, pm: 1.4 }, blurb: 'Todo a la vez. Solo para veteranos.' },
 };
 // Enemigos comunes. ai: nombre de comportamiento en entities/EnemyAI.js
 export const ENEMIES = {
   nopass: { name: 'Usuario sin contraseña', tex: 'e_nopass', hp: 18, speed: 52, dmg: 8, r: 8, xp: 1, ai: 'nopass', from: 0, w: 10, phrases: ['No recuerdo la clave.', 'Ayer funcionaba.'], scale: 3 },
-  email: { name: 'Correo infinito', tex: 'e_email', hp: 6, speed: 92, dmg: 4, r: 6, xp: 1, ai: 'email', from: 40, w: 7, scale: 3 },
-  printer: { name: 'Impresora asesina', tex: 'e_printer', hp: 70, speed: 34, dmg: 10, r: 11, xp: 4, ai: 'printer', from: 110, w: 3.2, scale: 3 },
-  av: { name: 'Antivirus rebelde', tex: 'e_av', hp: 48, speed: 50, dmg: 8, r: 9, xp: 4, ai: 'av', from: 170, w: 2.6, scale: 3 },
-  consult: { name: 'Consultor externo', tex: 'e_consult', hp: 95, speed: 40, dmg: 10, r: 9, xp: 7, ai: 'consult', from: 230, w: 2.2, scale: 3 },
-  pm: { name: 'Jefe de proyecto', tex: 'e_pm', hp: 240, speed: 44, dmg: 14, r: 11, xp: 12, ai: 'pm', from: 300, w: 1.2, phrases: ['Lo necesito para ayer.', '¿Está ya?'], scale: 3.4 },
+  email: { name: 'Correo infinito', tex: 'e_email', hp: 6, speed: 92, dmg: 4, r: 6, xp: 1, ai: 'email', from: 22, w: 7, scale: 3 },
+  printer: { name: 'Impresora asesina', tex: 'e_printer', hp: 70, speed: 34, dmg: 10, r: 11, xp: 4, ai: 'printer', from: 55, w: 3.2, scale: 3 },
+  av: { name: 'Antivirus rebelde', tex: 'e_av', hp: 48, speed: 50, dmg: 8, r: 9, xp: 4, ai: 'av', from: 90, w: 2.6, scale: 3 },
+  consult: { name: 'Consultor externo', tex: 'e_consult', hp: 95, speed: 40, dmg: 10, r: 9, xp: 7, ai: 'consult', from: 130, w: 2.2, scale: 3 },
+  pm: { name: 'Jefe de proyecto', tex: 'e_pm', hp: 240, speed: 44, dmg: 14, r: 11, xp: 12, ai: 'pm', from: 175, w: 1.2, phrases: ['Lo necesito para ayer.', '¿Está ya?'], scale: 3.4 },
   minion: { name: 'Participante', tex: 'e_minion', hp: 10, speed: 70, dmg: 5, r: 7, xp: 0.5, ai: 'chase', from: 9999, w: 0, scale: 2.6 },
   error: { name: 'Error', tex: 'e_error', hp: 8, speed: 105, dmg: 6, r: 6, xp: 0.5, ai: 'chase', from: 9999, w: 0, scale: 2.6 },
 };
