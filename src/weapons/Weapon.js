@@ -5,6 +5,8 @@ export class Weapon {
   get name() { return this.evolved ? this.def.evo.name : this.def.name; }
   get max() { return 5; }
   get lvlMult() { return 1 + 0.25 * (this.level - 1); }
+  get tier() { return this.evolved ? 6 : this.level; }
+  get tcol() { return [0xffffff, 0x9ff2ff, 0x5df28a, 0xffd24a, 0xff7a3a, 0xff3dcb][this.tier - 1]; }
   get blocked() { return this.s.t < this.blockedUntil; }
   dmg(base) { return base * this.lvlMult; }
   cd(base) { return base * this.s.player.cdMult * Math.pow(0.93, this.level - 1); }
