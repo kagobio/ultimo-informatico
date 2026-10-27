@@ -2,6 +2,8 @@ import { ART } from '../sprites/Art.js';
 import { WORLD, MAX_ENEMIES, DEBUG } from '../config.js';
 import { Save } from '../systems/Save.js';
 import { Sfx } from '../systems/Sfx.js';
+import { World } from '../world/World.js';
+import { buildOffice, updateOffice } from '../world/OfficeMap.js';
 import { Fx } from '../systems/Fx.js';
 import { Player } from '../entities/Player.js';
 import { Enemy } from '../entities/Enemy.js';
@@ -24,14 +26,18 @@ export class GameScene extends Phaser.Scene {
     this.cellStart = new Int32Array(GW * GW + 2); this.cellItems = new Array(MAX_ENEMIES + 80);
     this.hpScale = 1; this.dmgScale = 1;
     this.cameras.main.setBackgroundColor(map.bg).setRoundPixels(true);
+    this.world = new World(WORLD); this.wallPieces = [];
     // Suelo isométrico + muros
     this.floor = this.add.tileSprite(0, 0, WORLD / 1.5, WORLD / 3 * 1.0, 'floor').setOrigin(0, 0).setTileScale(ART.has.has('floor') ? 0.75 : 1.5).setTint(map.floor).setDepth(-1e5);
     this.floor.setSize(WORLD, WORLD);
-    const wl = this.add.graphics().setDepth(-9e4);
-    wl.fillStyle(0x2a3350, 1).fillRect(-80, -90, WORLD + 160, 90).fillRect(-80, WORLD, WORLD + 160, 70).fillRect(-80, 0, 80, WORLD).fillRect(WORLD, 0, 80, WORLD);
-    wl.fillStyle(0x4a5578, 1).fillRect(-80, -20, WORLD + 160, 20).fillRect(-80, WORLD, WORLD + 160, 10);
-    wl.fillStyle(0xffd24a, 1); for (let i = -80; i < WORLD + 80; i += 80) { wl.fillRect(i, -8, 40, 8); wl.fillRect(i, WORLD, 40, 6); }
-    this.decorate();
+    if (map.layout === 'office') buildOffice(this);
+    else {
+      const wl = this.add.graphics().setDepth(-9e4);
+      wl.fillStyle(0x2a3350, 1).fillRect(-80, -90, WORLD + 160, 90).fillRect(-80, WORLD, WORLD + 160, 70).fillRect(-80, 0, 80, WORLD).fillRect(WORLD, 0, 80, WORLD);
+      wl.fillStyle(0x4a5578, 1).fillRect(-80, -20, WORLD + 160, 20).fillRect(-80, WORLD, WORLD + 160, 10);
+      wl.fillStyle(0xffd24a, 1); for (let i = -80; i < WORLD + 80; i += 80) { wl.fillRect(i, -8, 40, 8); wl.fillRect(i, WORLD, 40, 6); }
+      this.decorate();
+    }
     this.zoneGfx = this.add.graphics().setDepth(-5e4);
     this.fx = new Fx(this);
     const cid = save.char in CHARACTERS ? save.char : 'tecnico';
@@ -66,22 +72,19 @@ export class GameScene extends Phaser.Scene {
     for (let x = 60; x < W; x += 170) { g.fillStyle(0x0b1020, 1).fillRect(x - 4, -196, 108, 108); g.fillStyle(0x9fd8ff, 1).fillRect(x, -192, 100, 100); g.fillStyle(0xffffff, 0.35).fillRect(x + 6, -186, 30, 88); g.fillStyle(0x0b1020, 1).fillRect(x + 48, -192, 4, 100); }
     g.fillStyle(0x2a3254, 1).fillRect(-200, 0, 200, W + 200).fillRect(W, 0, 200, W + 200).fillRect(-200, W, W + 400, 300);
     g.fillStyle(0x1b2238, 1).fillRect(-14, 0, 14, W).fillRect(W, 0, 14, W).fillRect(0, W, W, 14);
-    this.colliders = []; this.cgrid = new Map(); const big = { prop_desk: 30, prop_rack: 30, prop_printer: 26, prop_table: 38, prop_cab: 22, prop_cooler: 14, prop_box: 20, prop_plant: 12, prop_bin: 10 };
     let n = 0, tries = 0; const placed = [], step = [[56, 28], [-56, 28], [56, -28]];
     while (n < 120 && tries++ < 900) {
       const x = rnd(120, W - 120), y = rnd(140, W - 100);
       if ((x - cx) ** 2 + (y - cx) ** 2 < 260 * 260) continue;
       if (placed.some((q) => (q[0] - x) ** 2 + (q[1] - y) ** 2 < 130 * 130)) continue;
       placed.push([x, y]); const k = props[Math.floor(Math.random() * props.length)], d = step[Math.floor(Math.random() * 3)], cnt = (k === 'prop_desk' || k === 'prop_rack' || k === 'prop_printer') ? 3 : 1;
-      for (let m = 0; m < cnt; m++) { const px = x + d[0] * m * 1.5, py = y + d[1] * m * 1.5; if (px > W - 60 || py > W - 40 || px < 60) break; g.fillStyle(0x000000, 0.25).fillEllipse(px, py - 2, 80, 22); this.add.image(px, py, k).setOrigin(0.5, 1).setScale(ART.scale(k, 3)).setDepth(py); if (big[k]) { const q = [px, py - 10, big[k]]; this.colliders.push(q); const key = Math.floor(px / 96) * 100 + Math.floor((py - 10) / 96); (this.cgrid.get(key) || this.cgrid.set(key, []).get(key)).push(q); } n++; }
+      for (let m = 0; m < cnt; m++) { const px = x + d[0] * m * 1.5, py = y + d[1] * m * 1.5; if (px > W - 60 || py > W - 40 || px < 60) break; g.fillStyle(0x000000, 0.25).fillEllipse(px, py - 2, 80, 22); this.addProp(k, px, py); n++; }
     }
   }
-  // empuje fuera de muebles (jugador y enemigos terrestres). Devuelve la normal de contacto o null.
-  pushOut(o, r) {
-    let hit = null; const gx = Math.floor(o.x / 96), gy = Math.floor(o.y / 96);
-    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = this.cgrid.get((gx + a) * 100 + gy + b); if (!L) continue;
-      for (let i = 0; i < L.length; i++) { const q = L[i], dx = o.x - q[0], dy = (o.y - q[1]) * 1.8, rr = q[2] + r, d2 = dx * dx + dy * dy; if (d2 < rr * rr && d2 > 0.01) { const d = Math.sqrt(d2), k = (rr - d) / d; o.x += dx * k; o.y += dy * k / 1.8; hit = [dx / d, dy / d]; } } }
-    return hit;
+  addProp(k, x, y) {
+    this.add.image(x, y, k).setOrigin(0.5, 1).setScale(ART.scale(k, 3)).setDepth(y);
+    const f = this.textures.get(k).getSourceImage(), sc = ART.scale(k, 3), w = f.width * sc, h = f.height * sc, fw = Math.max(14, w * 0.62), fd = Math.max(10, h * 0.26);
+    this.world.add(x - fw / 2, y - fd, x + fw / 2, y);
   }
   sfx(n) { Sfx.play(n); }
   announce(text) { const ui = this.scene.get('UI'); if (ui && ui.tBanner && ui.tBanner.active && ui.tBanner.scene) ui.banner(text); else this.time.delayedCall(120, () => { if (!this.over) this.announce(text); }); }
@@ -116,9 +119,9 @@ export class GameScene extends Phaser.Scene {
   }
   spawnRingPos() {
     const cam = this.cameras.main, p = this.player, R = Math.hypot(cam.worldView.width, cam.worldView.height) / 2 + 50;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 16; i++) {
       const a = Math.random() * 6.283, x = p.x + Math.cos(a) * R, y = p.y + Math.sin(a) * R;
-      if (x > 30 && x < WORLD - 30 && y > 30 && y < WORLD - 30) return [x, y];
+      if (x > 60 && x < WORLD - 60 && y > 60 && y < WORLD - 60 && !this.world.blockedPt(x, y + 30, 18)) return [x, y];
     }
     const a = Math.random() * 6.283; return [Phaser.Math.Clamp(p.x + Math.cos(a) * R, 30, WORLD - 30), Phaser.Math.Clamp(p.y + Math.sin(a) * R, 30, WORLD - 30)];
   }
@@ -269,8 +272,26 @@ export class GameScene extends Phaser.Scene {
     }
   }
   spawnBoss(i) {
+    if (i < 2 && !this.over) { this.enterBossMode(i); return; }
     const def = BOSSES[i], [x, y] = this.spawnRingPos(); const e = this.spawnEnemy(def.id, x, y, def); if (!e) return;
     this.bosses.push(e); this.announce('¡JEFE: ' + def.name + '!'); Sfx.play('boss'); Sfx.setMode('boss'); this.cameras.main.shake(300, 0.008);
+  }
+  // ---------- Fases de jefe con otro tipo de juego ----------
+  enterBossMode(i) {
+    const def = BOSSES[i], pl = this.player; Sfx.play('boss');
+    const k = Math.min(3, Math.max(1, pl.dmgMult || 1) * (1 + (pl.level - 1) * 0.04));
+    this.inMode = true; this.paused = true; this.scene.sleep('UI'); this.scene.launch(i === 0 ? 'Plat' : 'Shoot', { game: this, i, hpFrac: Math.max(0.01, pl.hp / pl.maxHp), k });
+    this.scene.sleep();
+  }
+  modeDone(win, frac, i) {
+    this.inMode = false; this.paused = this.userPaused = false; Sfx.setMode('normal'); Sfx.mode = 'normal';
+    try { for (const k of Object.values(this.keys || {})) k.reset && k.reset(); } catch (e) {}
+    const def = BOSSES[i], pl = this.player;
+    if (!win) { pl.hp = 0; this.endRun(false); return; }
+    pl.hp = Math.max(1, Math.round(frac * pl.maxHp)); pl.invuln = 2.5; this.kills++; this.bossesKilled++;
+    this.cameras.main.fadeIn(400, 255, 255, 255); this.fx.ring(pl.x, pl.y, 320, 0xffd24a, 0.7);
+    this.dropPickup('chest', pl.x, pl.y - 60, 1); for (let n = 0; n < 14; n++) this.dropPickup('gem', pl.x + rnd(-80, 80), pl.y + rnd(-60, 60), def.xp / 14);
+    this.announce('¡' + def.name + ' DERROTADO!');
   }
   // ---------- Mejoras ----------
   rollChoices() {
@@ -333,7 +354,7 @@ export class GameScene extends Phaser.Scene {
   step(dt) {
     this.t += dt; const p = this.player;
     for (let i = this.laterQ.length - 1; i >= 0; i--) { const q = this.laterQ[i]; q.t -= dt; if (q.t <= 0) { this.laterQ.splice(i, 1); q.fn(); } }
-    const [ix, iy] = this.inputVec(); p.update(dt, ix, iy);
+    const [ix, iy] = this.inputVec(); p.update(dt, ix, iy); this.world.update(p.x, p.y + 34, dt); if (this.wallPieces.length) updateOffice(this, dt);
     if (this.god) p.hp = p.maxHp;
     this.rebuildGrid(); this.director(dt);
     for (const w of p.weapons) w.update(dt);

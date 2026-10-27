@@ -3,7 +3,14 @@ import { Save } from '../systems/Save.js';
 import { ART } from '../sprites/Art.js';
 export class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
-  preload() { for (const f of ART.files) this.load.image('art_' + f, 'assets/' + f + '.png'); for (const w of Object.values(ART.walk)) for (let i = 0; i < 4; i++) this.load.image('wk_' + w + '_w' + i, 'assets/walk/' + w + '_w' + i + '.png'); }
+  preload() { this.loadModes(); for (const f of ART.files) this.load.image('art_' + f, 'assets/' + f + '.png'); for (const w of Object.values(ART.walk)) for (let i = 0; i < 4; i++) this.load.image('wk_' + w + '_w' + i, 'assets/walk/' + w + '_w' + i + '.png'); }
+  loadModes() {
+    const A = 'assets/modes/', L = this.load; L.image('pl_bg', A + 'plat_bg.jpg'); L.image('sh_bg', A + 'shoot_bg.jpg');
+    for (let i = 0; i < 6; i++) L.image('ph' + i, A + 'ph' + i + '.png');
+    for (let i = 0; i < 4; i++) { L.image('pb' + i, A + 'pb' + i + '.png'); L.image('bl' + i, A + 'bl' + i + '.png'); L.image('pbl' + i, A + 'bl' + i + '.png'); L.image('sp' + i, A + 'sp' + i + '.png'); }
+    for (let i = 0; i < 2; i++) { L.image('sb' + i, A + 'sb' + i + '.png'); L.image('lock' + i, A + 'lock' + i + '.png'); L.image('flop' + i, A + 'flop' + i + '.png'); }
+    L.image('mail0', A + 'mail0.png');
+  }
   walkCheck() { ART.wOk = Object.values(ART.walk).every((w) => [0, 1, 2, 3].every((i) => this.textures.exists('wk_' + w + '_w' + i) && this.textures.get('wk_' + w + '_w' + i).key !== '__MISSING')); }
   create() {
     // las imágenes de assets/ sustituyen a los sprites procedurales con la misma clave
