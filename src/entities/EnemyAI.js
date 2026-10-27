@@ -4,9 +4,14 @@ const hex = () => '0x' + Math.floor(Math.random() * 0xffff).toString(16).toUpper
 function toward(e, tx, ty) { const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy) || 1; return [dx / d, dy / d, d]; }
 export function move(e, dt, s, dx, dy, speed) {
   let sx = 0, sy = 0;
+  if (s.world && e.def.ai !== 'email' && s.world.blk) {
+    e.navT = (e.navT || 0) - dt;
+    if (e.navT <= 0) { e.navT = 0.25 + Math.random() * 0.2; const p = s.player; e.nav = s.world.line(e.x, e.y + (e.h || 20), p.x, p.y + 34, 9); }
+    if (e.nav) { const p = s.player, tx = p.x - e.x, ty = p.y - e.y, tl = Math.hypot(tx, ty) || 1; if ((dx * tx + dy * ty) / tl > 0.3) { const d = s.world.dir(e.x, e.y + (e.h || 20)); if (d) { dx = d[0]; dy = d[1]; } } }
+  }
   if (!e.isBoss) s.forEachNear(e.x, e.y, e.r * 1.7, (o) => { if (o === e) return; const ox = e.x - o.x, oy = e.y - o.y, d2 = ox * ox + oy * oy, m = (e.r + o.r) * 0.9; if (d2 < m * m && d2 > 0.01) { const d = Math.sqrt(d2); sx += ox / d * (m - d); sy += oy / d * (m - d); } });
   e.x += (dx * speed + e.kx + sx * 9) * dt; e.y += (dy * speed + e.ky + sy * 9) * dt;
-  if (e.def.ai !== 'email' && s.cgrid) { const h = s.pushOut(e, e.isBoss ? 14 : Math.min(e.r, 10)); if (h) { if (!e.side) e.side = Math.random() < 0.5 ? -1 : 1; const t = speed * 0.9 * e.side * dt; e.x += -h[1] * t; e.y += h[0] * t / 1.8; } }
+  if (e.def.ai !== 'email' && s.world) { const h = s.world.push(e, e.isBoss ? 14 : Math.min(e.r, 10), e.h || 20); if (h && !e.nav) { if (!e.side) e.side = Math.random() < 0.5 ? -1 : 1; const t = speed * 0.9 * e.side * dt; e.x += -h[1] * t; e.y += h[0] * t; } }
   const k = Math.max(0, 1 - dt * 7); e.kx *= k; e.ky *= k;
   if (Math.abs(dx) > 0.2) e.face = dx < 0 ? -1 : 1;
 }

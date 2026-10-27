@@ -39,7 +39,7 @@ export class Player {
     const sp = this.speed; this.vx = ix * sp; this.vy = iy * sp;
     this.x = Math.min(WORLD - 24, Math.max(24, this.x + this.vx * dt)); this.y = Math.min(WORLD - 24, Math.max(24, this.y + this.vy * dt));
     // los muebles grandes bloquean al jugador y a los enemigos terrestres
-    if (this.s.cgrid) this.s.pushOut(this, this.r);
+    this.s.world.push(this, this.r, 34);
     if (ix < -0.1) this.face = -1; else if (ix > 0.1) this.face = 1;
     const moving = len > 0.1; if (moving) this.anim += dt * 9;
     const fr = moving ? (Math.floor(this.anim) % 2) : 0; const wf = ART.wframe(this.texKey, moving ? Math.floor(this.anim * 0.55) : 0);
