@@ -16,6 +16,7 @@ export class MenuScene extends Phaser.Scene {
   cycle(list, cur, d) { const i = list.indexOf(cur); return list[(i + d + list.length) % list.length]; }
   build() {
     const W = this.scale.width, H = this.scale.height, u = uiScale(this), cx = W / 2, s = this.save, land = W > H * 1.2;
+    if (land) { this.buildLand(W, H, s); return; }
     let y = H * (land ? 0.1 : 0.12);
     txt(this, cx, y, 'ÚLTIMO', 38 * u, '#7fd4ff'); txt(this, cx, y + 38 * u, 'INFORMÁTICO', 38 * u, '#ffffff');
     const ban = this.add.rectangle(cx, y + 80 * u, 300 * u, 26 * u, 0xd02030).setStrokeStyle(3, 0xff8a8a); txt(this, cx, y + 80 * u, 'APOCALYPSE SUPPORT', 17 * u, '#ffffff');
@@ -52,6 +53,33 @@ export class MenuScene extends Phaser.Scene {
     const inFrame = window.top !== window || !('serviceWorker' in navigator) || !(location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'); const foot = inFrame ? '' : standalone ? 'v1.0 · modo app' : (ios ? 'iPhone: Compartir ▸ «Añadir a pantalla de inicio» para jugar a pantalla completa' : 'Puedes instalarlo como app desde el menú del navegador');
     txt(this, cx, H - 16 * u, foot, 10 * u, '#8aa0c8', { style: { align: 'center', wordWrap: { width: W - 20 } } });
     if (Save.memoryOnly) txt(this, cx, H - 34 * u, '⚠ Este navegador no permite guardar: el progreso no se conservará', 10 * u, '#ff9a6a');
+  }
+  buildLand(W, H, s) {
+    const u = Phaser.Math.Clamp(H / 400, 0.7, 1.5), c1 = W * 0.27, c2 = W * 0.73;
+    let y = H * 0.16;
+    txt(this, c1, y, 'ÚLTIMO', 34 * u, '#7fd4ff'); txt(this, c1, y + 34 * u, 'INFORMÁTICO', 34 * u, '#ffffff');
+    this.add.rectangle(c1, y + 72 * u, 280 * u, 24 * u, 0xd02030).setStrokeStyle(3, 0xff8a8a); txt(this, c1, y + 72 * u, 'APOCALYPSE SUPPORT', 15 * u, '#ffffff');
+    txt(this, c1, y + 100 * u, 'Es lunes. Son las 08:00. Todo falla.', 12 * u, '#cfe3ff');
+    const by = H * 0.60;
+    button(this, c1, by, 240 * u, 52 * u, '▶  JUGAR', () => { Sfx.init(); this.scene.start('Game'); }, { fill: 0x1fa84a, stroke: 0xaaffc4, size: 26 * u });
+    button(this, c1 - 62 * u, by + 58 * u, 118 * u, 42 * u, 'TIENDA', () => this.scene.start('Shop'), { fill: 0x9a5be8, stroke: 0xdab8ff, size: 16 * u });
+    button(this, c1 + 62 * u, by + 58 * u, 118 * u, 42 * u, 'CÓMO JUGAR', () => this.help(), { fill: 0x2f6fb0, size: 14 * u });
+    txt(this, c1, by + 100 * u, '⭐ ' + s.points + ' Puntos de Soporte', 14 * u, '#ffd24a');
+    if (!s.unlockedChars.includes(s.char)) s.char = 'tecnico'; if (!s.unlockedMaps.includes(s.map)) s.map = 'oficina';
+    const ch = CHARACTERS[s.char], skinTex = s.char === 'tecnico' && s.skin !== 'clasico' ? 'p_' + s.skin : ch.tex, cy = H * 0.36;
+    const spr = this.add.image(c2, cy + 40 * u, skinTex + '_0').setOrigin(0.5, 1).setScale(ART.scale(skinTex, 5.5) * (ART.has.has(skinTex) ? 1.8 : 1) * u * 0.9); this.tweens.add({ targets: spr, y: spr.y - 6, yoyo: true, repeat: -1, duration: 500 });
+    this.time.addEvent({ delay: 280, loop: true, callback: () => spr.setTexture(skinTex + (spr.texture.key.endsWith('_0') ? '_1' : '_0')) });
+    this.add.image(c2, cy + 40 * u, 'shadow').setScale(1.9 * u).setDepth(-1);
+    txt(this, c2, cy + 62 * u, ch.name, 17 * u, '#ffd24a'); txt(this, c2, cy + 82 * u, ch.desc + '  ·  ' + WEAPONS[ch.weapon].name, 10 * u, '#cfe3ff', { style: { align: 'center', wordWrap: { width: W * 0.4 } } });
+    const arrow = (x, yy, l, cb) => button(this, x, yy, 44 * u, 44 * u, l, cb, { size: 22 * u });
+    const chars = this.unlockedChars(), maps = this.unlockedMaps();
+    arrow(c2 - 125 * u, cy - 10 * u, '◀', () => { s.char = this.cycle(chars, s.char, -1); Save.write(); this.rebuild(); });
+    arrow(c2 + 125 * u, cy - 10 * u, '▶', () => { s.char = this.cycle(chars, s.char, 1); Save.write(); this.rebuild(); });
+    const my = H * 0.84, mp = MAPS[s.map];
+    panel(this, c2, my, 214 * u, 46 * u, { fill: 0x16233f }); txt(this, c2, my - 8 * u, mp.name, 15 * u, '#ffffff'); txt(this, c2, my + 12 * u, mp.blurb, 9 * u, '#9fb8e8');
+    arrow(c2 - 135 * u, my, '◀', () => { s.map = this.cycle(maps, s.map, -1); Save.write(); this.rebuild(); }).setScale(0.8);
+    arrow(c2 + 135 * u, my, '▶', () => { s.map = this.cycle(maps, s.map, 1); Save.write(); this.rebuild(); }).setScale(0.8);
+    const mute = button(this, W - 26 * u, 26 * u, 40 * u, 40 * u, s.muted ? '🔇' : '🔊', () => { s.muted = !s.muted; Sfx.setMuted(s.muted); Save.write(); mute.setLabel(s.muted ? '🔇' : '🔊'); }, { size: 22 * u, fill: 0x253255 });
   }
   help() {
     const W = this.scale.width, H = this.scale.height, u = uiScale(this);

@@ -46,7 +46,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.sprite, true, 0.12, 0.12);
     this.applyZoom(); this.scale.on('resize', this.applyZoom, this);
     const kb = this.input.keyboard;
-    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,P,M,ONE,TWO,THREE');
+    this.keys = kb.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,ESC,P,M,ONE,TWO,THREE'); kb.on('keydown-SPACE', () => this.player && this.player.dash()); kb.on('keydown-SHIFT', () => this.player && this.player.dash()); this.combo = 0; this.comboT = 0; this.evT = 28; this.evN = 0; this.goalText = '';
     const autoPause = () => { if (!this.over && !this.levelUpOpen && !this.userPaused) { this.userPaused = true; this.paused = true; this.scene.get('UI').setPaused(true); } };
     this.game.events.on('hidden', autoPause); this.game.events.on('blur', autoPause);
     this.events.once('shutdown', () => { this.game.events.off('hidden', autoPause); this.game.events.off('blur', autoPause); });
@@ -145,7 +145,10 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < 14; i++) this.dropPickup('gem', e.x + rnd(-50, 50), e.y + rnd(-40, 40), e.def.xp / 14);
       return;
     }
-    this.dropPickup('gem', e.x, e.y, e.def.xp);
+    this.combo++; this.comboT = 2.6; if (this.combo % 25 === 0) { this.announce('¡COMBO x' + this.combo + '!'); this.dropPickup('chip', e.x, e.y, 1); Sfx.play('ding'); }
+    if (e.elite) { this.dropPickup('chest', e.x, e.y, 1); this.dropPickup('magnet', e.x + 24, e.y, 1); this.dropPickup('bomb', e.x - 24, e.y, 1); this.fx.ring(e.x, e.y, 200, 0xffd24a, 0.5); this.cameras.main.shake(300, 0.01); for (let i = 0; i < 8; i++) this.dropPickup('gem', e.x + rnd(-40, 40), e.y + rnd(-30, 30), e.def.xp / 4); return; }
+    this.dropPickup('gem', e.x, e.y, e.def.xp * (1 + Math.min(0.6, this.combo * 0.012)));
+    const pw = Math.random(); if (pw < 0.012) { this.dropPickup(['magnet', 'bomb', 'boost'][Math.floor(Math.random() * 3)], e.x, e.y, 1); return; }
     const r = Math.random(); if (r < 0.012) this.dropPickup('coffee', e.x, e.y, 25); else if (r < 0.035) this.dropPickup('chip', e.x, e.y, 1);
   }
   // ---------- Pickups ----------
@@ -153,7 +156,7 @@ export class GameScene extends Phaser.Scene {
     if (type === 'gem' && this.pickups.length > 260) { const g = this.pickups.find((q) => q.type === 'gem'); if (g) { g.v += v; this.tintGem(g); return; } }
     let q = this.pkFree.pop(); if (!q) q = { im: this.add.image(0, 0, 'gem') };
     q.type = type; q.v = v; q.x = x; q.y = y; q.mag = false; q.t = 0;
-    q.im.setTexture(type === 'gem' ? 'gem' : type).setVisible(true).setScale(ART.scale(type, type === 'chest' ? 3.4 : 2.6)).clearTint();
+    const PK = { magnet: ['chip', 0x34e6ff], bomb: ['chip', 0xff4020], boost: ['chip', 0x7aff9a] }[type]; q.im.setTexture(PK ? PK[0] : type === 'gem' ? 'gem' : type).setVisible(true).setScale(ART.scale(type, type === 'chest' ? 3.4 : PK ? 4 : 2.6)).clearTint(); if (PK) q.im.setTint(PK[1]);
     if (type === 'gem') this.tintGem(q);
     this.pickups.push(q);
   }
@@ -170,6 +173,9 @@ export class GameScene extends Phaser.Scene {
         if (q.type === 'gem') { this.addXp(q.v); Sfx.play('gem'); }
         else if (q.type === 'coffee') { p.heal(q.v); this.fx.dmg(p.x, p.y - 40, q.v, false, '#6aff8a'); Sfx.play('coin'); }
         else if (q.type === 'chip') { this.chips++; Sfx.play('coin'); }
+        else if (q.type === 'magnet') { for (const o of this.pickups) o.mag = true; this.announce('¡IMÁN! Todo el XP hacia ti'); this.fx.ring(p.x, p.y, 220, 0x34e6ff, 0.5); Sfx.play('levelup'); }
+        else if (q.type === 'boost') { p.boostT = 8; this.announce('¡CAFEÍNA! +30% velocidad'); this.fx.ring(p.x, p.y, 90, 0x7aff9a, 0.4); Sfx.play('coin'); }
+        else if (q.type === 'bomb') { this.announce('¡EMP! Pantallazo a todo'); Sfx.play('boom'); this.cameras.main.flash(250, 255, 200, 80); this.cameras.main.shake(300, 0.012); const v = this.cameras.main.worldView; this.fx.ring(p.x, p.y, 300, 0xff7a3a, 0.6); for (const o of this.enemies.slice()) if (!o.dead && o.x > v.x - 40 && o.x < v.right + 40 && o.y > v.y - 40 && o.y < v.bottom + 40) this.damageEnemy(o, o.isBoss ? o.maxHp * 0.03 : Math.max(60, o.maxHp * 0.6), { kb: 200, sx: p.x, sy: p.y }); }
         else if (q.type === 'chest') { p.heal(p.maxHp * 0.3); this.pending++; this.announce('¡CAJA DE HERRAMIENTAS!'); Sfx.play('levelup'); }
         q.im.setVisible(false); this.pickups.splice(i, 1); this.pkFree.push(q);
       }
@@ -251,10 +257,10 @@ export class GameScene extends Phaser.Scene {
   }
   // ---------- Director ----------
   director(dt) {
-    const t = this.t, m = this.map; this.hpScale = (1 + t / 60 * 0.11) * m.diff; this.dmgScale = 1 + t / 60 * 0.05 * Math.sqrt(m.diff);
+    const t = this.t, m = this.map; this.hpScale = (1 + t / 60 * 0.16) * m.diff; this.dmgScale = 1 + t / 60 * 0.05 * Math.sqrt(m.diff);
     const bossAlive = this.bosses.length > 0;
     if (this.nextBoss < 3 && t >= m.bossAt[this.nextBoss]) this.spawnBoss(this.nextBoss++);
-    const rate = m.density * (0.9 + t / 60 * 0.6) * (bossAlive ? 0.3 : 1);
+    const rate = m.density * (1.0 + t / 60 * 0.85) * (bossAlive ? 0.3 : 1);
     this.budget += rate * dt;
     if (this.budget >= 1) {
       const types = Object.keys(ENEMIES).filter((k) => ENEMIES[k].w > 0 && t >= ENEMIES[k].from);
@@ -265,12 +271,17 @@ export class GameScene extends Phaser.Scene {
         const [x, y] = this.spawnRingPos(); this.spawnEnemy(k, x, y);
       }
     }
-    this.swarmT -= dt;
-    if (this.swarmT <= 0 && !bossAlive) {
-      this.swarmT = 26; const n = Math.floor(10 + t / 60 * 2.2), a0 = Math.random() * 6.283, cam = this.cameras.main, R = Math.hypot(cam.worldView.width, cam.worldView.height) / 2 + 60, p = this.player;
-      Sfx.play('ding'); this.announce('¡CORREOS MASIVOS!');
-      for (let i = 0; i < n; i++) { const a = a0 + (i / n - 0.5) * 1.1; this.spawnEnemy('email', Phaser.Math.Clamp(p.x + Math.cos(a) * R, 20, WORLD - 20), Phaser.Math.Clamp(p.y + Math.sin(a) * R, 20, WORLD - 20)); }
-    }
+    this.comboT -= dt; if (this.comboT <= 0) this.combo = 0;
+    this.evT -= dt; if (this.evT <= 0 && !bossAlive) { this.evT = 34 + Math.random() * 10; this.runEvent(); }
+    if (this.nextBoss < 3) { const rem = Math.max(0, Math.ceil(m.bossAt[this.nextBoss] - t)); this.goalText = 'JEFE ' + (this.nextBoss + 1) + '/3 EN ' + Math.floor(rem / 60) + ':' + String(rem % 60).padStart(2, '0'); } else this.goalText = bossAlive ? '¡DERROTA AL JEFE!' : '¡SOBREVIVE!';
+  }
+  runEvent() {
+    const t = this.t, p = this.player, cam = this.cameras.main, R = Math.hypot(cam.worldView.width, cam.worldView.height) / 2 + 50; const kinds = ['swarm', 'ring', 'elite', 'rush']; const k = this.evN === 0 ? 'swarm' : this.evN === 1 ? 'elite' : kinds[Math.floor(Math.random() * 4)]; this.evN++;
+    const types = Object.keys(ENEMIES).filter((q) => ENEMIES[q].w > 0 && t >= ENEMIES[q].from), clampW = (v) => Phaser.Math.Clamp(v, 20, WORLD - 20);
+    if (k === 'swarm') { const n = Math.floor(12 + t / 60 * 3), a0 = Math.random() * 6.283; Sfx.play('ding'); this.announce('¡CORREOS MASIVOS!'); for (let i = 0; i < n; i++) { const a = a0 + (i / n - 0.5) * 1.1; this.spawnEnemy('email', clampW(p.x + Math.cos(a) * R), clampW(p.y + Math.sin(a) * R)); } }
+    else if (k === 'ring') { const n = 22 + Math.floor(t / 40), key = types[Math.floor(Math.random() * Math.min(types.length, 3))]; Sfx.play('boss'); this.announce('¡CERCO! ¡ROMPE EL CÍRCULO!'); this.cameras.main.shake(250, 0.006); for (let i = 0; i < n; i++) { const a = i / n * 6.283; this.spawnEnemy(key, clampW(p.x + Math.cos(a) * R * 0.9), clampW(p.y + Math.sin(a) * R * 0.9)); } }
+    else if (k === 'rush') { const a = Math.random() * 6.283, n = 14; Sfx.play('ding'); this.announce('¡OLEADA DE TICKETS!'); for (let i = 0; i < n; i++) { const o = (i - n / 2) * 22; this.spawnEnemy('error', clampW(p.x + Math.cos(a) * R - Math.sin(a) * o), clampW(p.y + Math.sin(a) * R + Math.cos(a) * o)); } }
+    else { const key = types[types.length - 1], a = Math.random() * 6.283; const e = this.spawnEnemy(key, clampW(p.x + Math.cos(a) * R), clampW(p.y + Math.sin(a) * R)); if (e) { e.maxHp = e.hp = e.maxHp * 9; e.elite = true; e.dmg *= 1.3; e.permTint = 0xffd24a; e.sprite.setTint(0xffd24a); e.r *= 1.6; e.h *= 1.6; Sfx.play('boss'); this.announce('¡ELITE: ' + e.def.name.toUpperCase() + '!'); this.fx.say(e, '¡SOY IMPORTANTE!', 1.8, 14); } }
   }
   bossFx(e, col) {
     const c = this.cameras.main; c.flash(350, 255, 255, 255); c.shake(500, 0.014); this.fx.ring(e.x, e.y, 380, col, 0.8); this.fx.ring(e.x, e.y, 220, 0xffffff, 0.45); this.fx.burst('boom', e.x, e.y, 36);

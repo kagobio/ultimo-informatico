@@ -10,9 +10,12 @@ export class UIScene extends Phaser.Scene {
     this.gfx = this.add.graphics(); this.jg = this.add.graphics().setDepth(5);
     this.tTime = txt(this, 0, 0, '00:00', 26); this.tHp = txt(this, 0, 0, '', 13); this.tLv = txt(this, 0, 0, '', 14, '#ffd24a', { ox: 0 });
     this.tDmg = txt(this, 0, 0, '', 12, '#ffffff', { ox: 0 }); this.tBoss = txt(this, 0, 0, '', 13, '#ff8a8a'); this.tBanner = txt(this, 0, 0, '', 24, '#ffd24a').setAlpha(0).setDepth(20);
+    this.tGoal = txt(this, 0, 0, '', 12, '#ffd24a'); this.tCombo = txt(this, 0, 0, '', 16, '#ff9ad0', { ox: 1 });
+    this.dashBtn = this.add.circle(0, 0, 38, 0x1b2850, 0.7).setStrokeStyle(4, 0x7fd4ff).setInteractive().setDepth(6); this.dashTxt = txt(this, 0, 0, 'DASH', 13, '#ffffff').setDepth(7);
+    this.dashBtn.on('pointerdown', () => { if (this.g.player && !this.overlay) this.g.player.dash(); });
     this.wIcons = []; this.pauseBtn = this.add.rectangle(0, 0, 10, 10, 0x1b2850, 0.9).setStrokeStyle(3, 0x9fd0ff).setInteractive(); this.pauseTxt = txt(this, 0, 0, '❚❚', 18);
     this.pauseBtn.on('pointerup', () => this.g.togglePause());
-    this.input.on('pointerdown', (p, over) => { if (this.overlay || this.pauseOv || over.length || this.joyId !== null || this.g.over) return; this.joyId = p.id; this.joy = { x: p.x, y: p.y }; });
+    this.input.on('pointerdown', (p, over) => { if (this.overlay || this.pauseOv || over.length || this.joyId !== null || this.g.over || p.x > this.scale.width * 0.62) return; this.joyId = p.id; this.joy = { x: p.x, y: p.y }; });
     this.input.on('pointermove', (p) => { if (this.joyId !== p.id || !this.joy) return; const R = 52 * this.u, dx = p.x - this.joy.x, dy = p.y - this.joy.y, d = Math.hypot(dx, dy); if (d > R) { this.joy.x = p.x - dx / d * R; this.joy.y = p.y - dy / d * R; } const m = Math.min(1, d / R); this.registry.set('joy', d < 6 ? { x: 0, y: 0 } : { x: dx / d * m, y: dy / d * m }); });
     const up = (p) => { if (p.id === this.joyId) { this.joyId = null; this.joy = null; this.registry.set('joy', { x: 0, y: 0 }); } };
     this.input.on('pointerup', up); this.input.on('pointerupoutside', up);
@@ -23,6 +26,7 @@ export class UIScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height, u = this.u = uiScale(this);
     this.tTime.setPosition(W / 2, 34 * u).setFontSize(22 * u); this.tLv.setPosition(58 * u, 25 * u).setFontSize(13 * u);
     this.tHp.setFontSize(12 * u); this.tDmg.setPosition(14 * u, 92 * u).setFontSize(12 * u); this.tBoss.setPosition(W / 2, 128 * u).setFontSize(13 * u);
+    this.tGoal.setPosition(W / 2, 62 * u).setFontSize(12 * u); this.tCombo.setPosition(W - 14 * u, 64 * u).setFontSize(16 * u); this.dashBtn.setPosition(W - 74 * u, H - 78 * u).setRadius(38 * u); this.dashTxt.setPosition(W - 74 * u, H - 78 * u).setFontSize(12 * u);
     this.tBanner.setPosition(W / 2, H * 0.28).setFontSize(24 * u).setWordWrapWidth(W - 20); this.pauseBtn.setPosition(W - 28 * u, 26 * u).setSize(40 * u, 40 * u); this.pauseTxt.setPosition(W - 28 * u, 26 * u).setFontSize(16 * u);
   }
   banner(s) {
@@ -56,6 +60,8 @@ export class UIScene extends Phaser.Scene {
     // iconos de armas
     const ws = p.weapons; while (this.wIcons.length < ws.length) this.wIcons.push({ im: this.add.image(0, 0, 'gem'), t: txt(this, 0, 0, '', 11, '#ffd24a') });
     this.wIcons.forEach((o, i) => { const w = ws[i]; o.im.setVisible(!!w); o.t.setVisible(!!w); if (!w) return; const x = 24 * u + i * 38 * u, y = this.scale.height - 28 * u; o.im.setTexture(w.def.icon).setPosition(x, y).setScale(ART.fitS(this, w.def.icon, 30 * u, 2.4 * u)).setAlpha(w.blocked ? 0.3 : 1); o.t.setPosition(x + 10 * u, y + 14 * u).setText(w.evolved ? '★' : String(w.level)); });
+    this.tGoal.setText(g.goalText || ''); this.tCombo.setText(g.combo >= 5 ? 'COMBO x' + g.combo : '').setAlpha(Math.min(1, g.comboT + 0.2));
+    { const cd = Phaser.Math.Clamp((p.dashCd || 0) / 1.5, 0, 1), bx = this.dashBtn.x, by = this.dashBtn.y, br = 38 * u; this.dashBtn.setAlpha(cd > 0 ? 0.5 : 1).setStrokeStyle(4, cd > 0 ? 0x556080 : 0x7fd4ff); if (cd > 0) { gf.fillStyle(0x7fd4ff, 0.35).slice(bx, by, br, -Math.PI / 2, -Math.PI / 2 + (1 - cd) * Math.PI * 2, false).fillPath(); } }
     const jg = this.jg; jg.clear(); if (this.joy && this.joyId !== null) { const o = this.registry.get('joy'); const ox = this.joy.x - o.x * 52 * u, oy = this.joy.y - o.y * 52 * u; jg.lineStyle(3, 0xffffff, 0.5).strokeCircle(ox, oy, 52 * u); jg.fillStyle(0xffffff, 0.12).fillCircle(ox, oy, 52 * u); jg.fillStyle(0x7fd4ff, 0.6).fillCircle(this.joy.x, this.joy.y, 22 * u); }
   }
   showLevelUp(choices, cb) {

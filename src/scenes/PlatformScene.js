@@ -1,14 +1,14 @@
 import { Sfx } from '../systems/Sfx.js';
 // Fase de jefe en plataformas (vista de perfil): nivel con huecos, plataformas móviles, enemigos y jefe de 3 fases.
 const FONT = { fontFamily: 'monospace', fontStyle: 'bold' };
-const LW = 2260;
-const GROUND = [[0, 430], [570, 860], [1130, 1400], [1880, 2260]];
+const LW = 2420;
+const GROUND = [[0, 430], [570, 860], [1130, 1400], [1880, 2420]];
 const CHECK = [20, 600, 1160, 1900];
 export class PlatformScene extends Phaser.Scene {
   constructor() { super('Plat'); }
   init(d) { this.d = d || { hpFrac: 1, k: 1 }; this.fin = false; this.endT = 0; this.introT = 0; }
   create() {
-    const W = this.scale.width, H = this.scale.height, Z = W / 320; this.Z = Z; const VW = 320, VH = H / Z; this.VW = VW; this.VH = VH;
+    const W = this.scale.width, H = this.scale.height, Z = H / 420; this.Z = Z; const VH = 420, VW = W / Z; this.VW = VW; this.VH = VH;
     const cam = this.cam = this.cameras.main; cam.setZoom(Z).setBackgroundColor('#060912');
     const GY = this.GY = Math.round(VH * 0.8);
     const bgi0 = this.textures.get('pl_bg').getSourceImage(), s = (VH * 1.1) / bgi0.height, tw = bgi0.width * s, bgY = GY - 0.94 * bgi0.height * s + bgi0.height * s / 2;
@@ -34,7 +34,7 @@ export class PlatformScene extends Phaser.Scene {
     this.pl = { x: 40, y: GY, vx: 0, vy: 0, on: true, face: 1, hp: hp0, t: 0, inv: 0, shot: 0, coy: 0, buf: 0, cp: 0, on_m: null };
     this.ps = this.add.image(0, 0, 'ph0').setOrigin(0.5, 1).setDepth(5).setScale(0.9);
     // jefe
-    this.boss = { x: 2150, hp: 1400, max: 1400, t: 0, hit: 0, st: 'wait', stT: 2, phase: 1, inv: 0, dying: 0, face: -1, vx: 0, home: 2150, act: 'idle', n: 0 };
+    this.boss = { x: 2310, hp: 1400, max: 1400, t: 0, hit: 0, st: 'wait', stT: 2, phase: 1, inv: 0, dying: 0, face: -1, vx: 0, home: 2310, act: 'idle', n: 0 };
     this.bs = this.add.image(0, 0, 'pb0').setOrigin(0.5, 1).setDepth(4).setScale(1.25); this.bs.setVisible(true);
     this.bul = []; this.eb = []; this.waves = []; this.foes = []; this.zap = { st: 0, t: 0, side: 0 }; this.fxs = [];
     const mk = (kind, x, y) => ({ kind, x, y, y0: y, hp: kind === 'w' ? 24 : 16, dir: -1, t: Math.random() * 6, s: this.add.image(0, 0, kind === 'w' ? 'ew0' : 'em0').setOrigin(0.5, 1).setDepth(4).setScale(kind === 'w' ? 0.75 : 0.9), seg: kind === 'w' ? GROUND.findIndex(([a, b]) => x >= a && x <= b) : -1 });
@@ -131,7 +131,7 @@ export class PlatformScene extends Phaser.Scene {
     if (this.zap.st) { const z = this.zapG, [x0, x1] = this.zapRange(); if (this.zap.st === 1) { z.fillStyle(0xffd24a, Math.floor(this.t * 12) % 2 ? 0.45 : 0.15).fillRect(x0, GY - 6, x1 - x0, 12); } else { z.fillStyle(0xffe14a, 0.6).fillRect(x0, GY - 14, x1 - x0, 14); z.lineStyle(3, 0xffffff, 1); for (let x = x0; x < x1; x += 30) { z.beginPath(); z.moveTo(x, GY); z.lineTo(x + 10, GY - 10 - Math.random() * 30); z.lineTo(x + 20, GY - Math.random() * 10); z.strokePath(); } } }
     this.checkEnd(dt / this.slow, b.dying > 0 || b.hp > 0 ? { hp: b.dying > 0 || b.hp > 0 ? 1 : 0 } : b, p, this.camX, this.VH / 2);
   }
-  zapRange() { const z = this.zap; if (!this.boss) return [1945, 2260]; const m = (1945 + 2260) / 2; return z.side === 0 ? [1945, 2260] : z.side === 1 ? [1945, m] : [m, 2260]; }
+  zapRange() { const z = this.zap; if (!this.boss) return [1945, 2420]; const m = (1945 + 2420) / 2; return z.side === 0 ? [1945, 2420] : z.side === 1 ? [1945, m] : [m, 2420]; }
   updateBoss(dt) {
     const b = this.boss, p = this.pl, GY = this.GY; b.t += dt; b.hit = Math.max(0, b.hit - dt); b.inv = Math.max(0, b.inv - dt);
     const sp = 1 + (b.phase - 1) * 0.25;

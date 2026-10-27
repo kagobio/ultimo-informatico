@@ -6,7 +6,7 @@ export class ShooterScene extends Phaser.Scene {
   constructor() { super('Shoot'); }
   init(d) { this.d = d || { hpFrac: 1, k: 1 }; this.fin = false; this.endT = 0; }
   create() {
-    const W = this.scale.width, H = this.scale.height; this.W = W; this.H = H; this.cameras.main.setBackgroundColor('#060912');
+    const SW = this.scale.width, SH = this.scale.height, z = SH / 560, W = Math.min(SW / z, 700), H = 560; this.W = W; this.H = H; this.z = z; this.vx = (SW - W * z) / 2; const cm = this.cameras.main; cm.setViewport(this.vx, 0, W * z, SH).setZoom(z).setScroll(W / 2 - W * z / 2 / z * 0, 0); cm.setScroll(0, 0); cm.centerOn(W / 2, H / 2); this.cameras.main.setBackgroundColor('#060912');
     const t = this.textures.get('sh_bg').getSourceImage(), s = W / t.width; this.bgH = t.height * s; this.bgs = [];
     for (let i = 0; i < 3; i++) { const im = this.add.image(W / 2, 0, 'sh_bg').setScale(s).setDepth(-10).setFlipY(i % 2 === 1); im.i = i; this.bgs.push(im); } this.scroll = 0;
     this.pl = { x: W / 2, y: H - 130, hp: Math.max(1, Math.round(100 * (this.d.hpFrac ?? 1))), inv: 0 };
@@ -20,13 +20,13 @@ export class ShooterScene extends Phaser.Scene {
     this.sc = this.add.text(12, H - 36, 'PUNTOS 0', { ...FONT, fontSize: '14px', color: '#ffd24a', stroke: '#000', strokeThickness: 4 }).setDepth(21);
     this.add.text(W - 12, H - 36, 'ESCUDO', { ...FONT, fontSize: '12px', color: '#7fffd4', stroke: '#000', strokeThickness: 3 }).setOrigin(1, 0).setDepth(21);
     this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,DOWN,A,D,W,S'); Object.values(this.keys).forEach((q) => q.reset()); this.intro('¡JEFE!', 'EL SERVIDOR DE PRODUCCIÓN · 2D VERTICAL', '#ff7a8a'); Sfx.setMode && Sfx.setMode('boss');
-    this.input.on('pointermove', (p) => { if (p.isDown) this.tgt = { x: p.x, y: p.y - 70 }; }); this.input.on('pointerdown', (p) => { this.tgt = { x: p.x, y: p.y - 70 }; }); this.input.on('pointerup', () => { this.tgt = null; });
+    const pw = (p) => ({ x: (p.x - this.vx) / this.z, y: p.y / this.z - 70 }); this.input.on('pointermove', (p) => { if (p.isDown) this.tgt = pw(p); }); this.input.on('pointerdown', (p) => { this.tgt = pw(p); }); this.input.on('pointerup', () => { this.tgt = null; });
   }
   intro(title, sub, col) {
-    this.introT = 1.8; const W = this.scale.width, H = this.scale.height;
+    this.introT = 1.8; const W = this.W, H = this.H;
     this.ban = this.add.container(0, 0).setDepth(50).setScrollFactor(0);
     const sc = this.cameras.main.zoom;
-    const bx = this.add.rectangle(this.cameras.main.midPoint.x, this.cameras.main.midPoint.y - 40 / sc, W / sc, 110 / sc, 0x000000, 0.7); const t1 = this.add.text(bx.x, bx.y - 14 / sc, title, { fontFamily: 'monospace', fontStyle: 'bold', fontSize: Math.round(26 / sc) + 'px', color: col, stroke: '#000', strokeThickness: 5 / sc }).setOrigin(0.5); const t2 = this.add.text(bx.x, bx.y + 22 / sc, sub, { fontFamily: 'monospace', fontStyle: 'bold', fontSize: Math.round(14 / sc) + 'px', color: '#ffffff' }).setOrigin(0.5);
+    const bx = this.add.rectangle(this.cameras.main.midPoint.x, this.cameras.main.midPoint.y - 40 / sc, W, 110 / sc, 0x000000, 0.7); const t1 = this.add.text(bx.x, bx.y - 14 / sc, title, { fontFamily: 'monospace', fontStyle: 'bold', fontSize: Math.round(26 / sc) + 'px', color: col, stroke: '#000', strokeThickness: 5 / sc }).setOrigin(0.5); const t2 = this.add.text(bx.x, bx.y + 22 / sc, sub, { fontFamily: 'monospace', fontStyle: 'bold', fontSize: Math.round(14 / sc) + 'px', color: '#ffffff' }).setOrigin(0.5);
     this.ban.add([bx, t1, t2]); this.cameras.main.fadeIn(350, 0, 0, 0);
   }
   checkEnd(dt, boss, p, cx, cy, WorldK) {
