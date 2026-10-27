@@ -63,7 +63,7 @@ export class UIScene extends Phaser.Scene {
     const dim = this.add.rectangle(0, 0, W, H, 0x050814, 0.82).setOrigin(0).setInteractive(); items.push(dim);
     const title = txt(this, W / 2, H * 0.1, '¡SUBES DE NIVEL!', 28 * u, '#ffd24a'); items.push(title);
     const land = W > H * 1.15, n = choices.length, cw = land ? Math.min(W / n - 20, 250 * u) : Math.min(W - 28, 420 * u), ch = land ? 230 * u : Math.min(110 * u, (H * 0.8 - 20) / n - 12);
-    this.cards = []; this.joyId = null; this.joy = null; this.registry.set('joy', { x: 0, y: 0 });
+    this.lockUntil = performance.now() + 800; this.cards = []; this.joyId = null; this.joy = null; this.registry.set('joy', { x: 0, y: 0 });
     choices.forEach((c, i) => {
       const x = land ? W / 2 + (i - (n - 1) / 2) * (cw + 14) : W / 2, y = land ? H * 0.52 : H * 0.2 + (i + 0.5) * (ch + 10) + 20 * u;
       const col = c.kind === 'evo' ? 0xffd24a : c.kind === 'weapon' || c.kind === 'new' ? 0x7fd4ff : c.kind === 'passive' ? 0xff9ad0 : 0x7aff9a;
@@ -73,9 +73,9 @@ export class UIScene extends Phaser.Scene {
       const tt = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.02 : y - 12 * u, c.title, 15 * u, '#ffffff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u } }, ox: land ? 0.5 : 0.5 });
       const dd = txt(this, land ? x : x + 28 * u, land ? y + ch * 0.28 : y + 18 * u, c.desc, 11 * u, '#cfe3ff', { style: { align: land ? 'center' : 'left', wordWrap: { width: land ? cw - 16 : cw - 110 * u }, strokeThickness: 2 } });
       let fired = false; const fire = () => { if (fired) return; fired = true; Sfx.play('click'); items.forEach((o) => o.destroy()); this.overlay = null; this.cards = null; cb(c); };
-      bg.on('pointerup', fire); this.cards.push(location.search.includes('debug') ? { fire, c } : { fire }); items.push(bg, ic, tag, tt, dd);
+      let downId = null; bg.on('pointerdown', (p) => { downId = performance.now() < this.lockUntil ? null : p.id; }); bg.on('pointerout', () => { downId = null; }); bg.on('pointerup', (p) => { if (downId !== null && downId === p.id && performance.now() >= this.lockUntil) fire(); downId = null; }); this.cards.push(location.search.includes('debug') ? { fire, c } : { fire }); items.push(bg, ic, tag, tt, dd);
     });
-    items.forEach((o, i) => o.setDepth(30 + (i > 1 ? 1 : 0))); this.overlay = items;
+    items.forEach((o, i) => o.setDepth(30 + (i > 1 ? 1 : 0))); this.overlay = items; items.forEach((o, i) => { if (i > 1 && o.setAlpha) { o.setAlpha(0.45); this.tweens.add({ targets: o, alpha: 1, delay: 800, duration: 150 }); } });
   }
   setPaused(on) {
     if (this.pauseOv) { this.pauseOv.forEach((o) => o.destroy()); this.pauseOv = null; }
