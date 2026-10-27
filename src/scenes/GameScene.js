@@ -139,7 +139,7 @@ export class GameScene extends Phaser.Scene {
     if (e.dead) return; e.dead = true; e.sprite.setVisible(false); this.kills++;
     this.fx.burst(e.isBoss ? 'boom' : 'dust', e.x, e.y, e.isBoss ? 40 : 7); Sfx.play('kill');
     if (e.isBoss) {
-      this.bosses = this.bosses.filter((b) => b !== e); this.bossesKilled++; Sfx.play('boom'); this.cameras.main.shake(400, 0.012); this.fx.ring(e.x, e.y, 320, 0xffd24a, 0.7);
+      this.bosses = this.bosses.filter((b) => b !== e); this.bossesKilled++; Sfx.play('boom'); this.cameras.main.shake(900, 0.02); this.fx.ring(e.x, e.y, 320, 0xffd24a, 0.7); this.cameras.main.flash(600, 255, 240, 200); this.timeScale = 0.35; this.time.delayedCall(1300, () => { this.timeScale = 1; }); for (let q = 0; q < 12; q++) this.time.delayedCall(q * 90, () => { this.fx.burst('boom', e.x + rnd(-60, 60), e.y + rnd(-50, 50), 22); this.fx.ring(e.x + rnd(-50, 50), e.y + rnd(-40, 40), 90 + q * 8, [0xffd24a, 0xff7a3a, 0xffffff][q % 3], 0.5); Sfx.play('boom'); });
       if (e.def.id === 'user') { this.victoryT = 2.2; this.announce('¡INFRAESTRUCTURA RESTABLECIDA!'); for (const o of this.enemies) if (!o.dead && o !== e) { o.dead = true; o.sprite.setVisible(false); this.fx.burst('digital', o.x, o.y, 4); } }
       else { this.dropPickup('chest', e.x, e.y, 1); this.announce('¡' + e.def.name + ' DERROTADO!'); Sfx.setMode('normal'); if (this.bosses.length === 0) Sfx.mode = 'normal'; }
       for (let i = 0; i < 14; i++) this.dropPickup('gem', e.x + rnd(-50, 50), e.y + rnd(-40, 40), e.def.xp / 14);
@@ -183,10 +183,11 @@ export class GameScene extends Phaser.Scene {
   spawnPProj(c) {
     let p = this.ppFree.pop(); if (!p) p = { im: this.add.image(0, 0, c.tex), hit: [] };
     Object.assign(p, { x: c.x, y: c.y, vx: c.vx, vy: c.vy, dmg: c.dmg, pierce: c.pierce || 0, bounce: c.bounce || 0, life: c.life || 1, r: c.r || 6, spin: c.spin || 0, align: !!c.align, aoe: c.aoe || 0, aoeDmg: c.aoeDmg || 0, speed: c.speed || 0, dead: false });
-    p.hit.length = 0; p.im.setTexture(c.tex).setScale(ART.scale(c.tex, c.scale || 2.5)).setVisible(true).setAlpha(1).setFlipY(false); p.art = ART.has.has(c.tex);
+    p.hit.length = 0; p.tier = c.tier || 1; p.tcol = c.tcol || 0xffffff; p.im.setTexture(c.tex).setScale(ART.scale(c.tex, (c.scale || 2.5) * (1 + 0.14 * (p.tier - 1)))).setVisible(true).setAlpha(1).setFlipY(false); p.art = ART.has.has(c.tex);
     if (c.tint) p.im.setTint(c.tint); else p.im.clearTint();
     if (p.align) p.im.setRotation(Math.atan2(p.vy, p.vx) + (p.art ? 0 : Math.PI / 2)); else p.im.setRotation(0);
     if (p.art && p.vx < 0) p.im.setFlipY(p.align);
+    if (p.tier >= 2) { if (!p.gl) p.gl = this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD); p.gl.setVisible(true).setTint(p.tcol).setScale(0.55 + 0.16 * p.tier).setAlpha(0.5 + 0.08 * p.tier); } else if (p.gl) p.gl.setVisible(false);
     this.pprojs.push(p); return p;
   }
   killP(p) { if (p.dead) return; p.dead = true; if (p.aoe) this.explode(p.x, p.y, p.aoe, p.aoeDmg, { kb: 160, sfx: 'boom', color: 'boom' }); }
@@ -195,7 +196,7 @@ export class GameScene extends Phaser.Scene {
       const p = this.pprojs[i];
       p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
       if (p.spin) p.im.rotation += p.spin * dt;
-      p.im.setPosition(p.x, p.y).setDepth(p.y + 40);
+      p.im.setPosition(p.x, p.y).setDepth(p.y + 40); if (p.gl && p.gl.visible) { p.gl.setPosition(p.x, p.y).setDepth(p.y + 39); if (p.tier >= 3 && ((this.frameN = (this.frameN || 0) + 1) % 2 === 0)) this.fx.trail(p.x, p.y, p.tier >= 6 ? [0xff3d6e, 0xffd24a, 0x5df28a, 0x34e6ff, 0xff3dcb][(this.frameN >> 1) % 5] : p.tcol); }
       if (p.life <= 0) this.killP(p);
       else this.forEachNear(p.x, p.y, p.r + 26, (e) => {
         if (p.dead || p.hit.includes(e)) return; const rr = e.r + p.r; if ((e.x - p.x) ** 2 + (e.y - p.y) ** 2 > rr * rr) return;
@@ -204,7 +205,7 @@ export class GameScene extends Phaser.Scene {
         if (p.bounce > 0) { const n = this.nearest(e.x, e.y, 280, p.hit); if (n) { p.bounce--; const a = Math.atan2(n.y - e.y, n.x - e.x); p.vx = Math.cos(a) * p.speed; p.vy = Math.sin(a) * p.speed; p.im.setRotation(a + Math.PI / 2); p.life = Math.max(p.life, 0.6); Sfx.play('mouse'); } else p.dead = true; }
         else if (p.pierce > 0) p.pierce--; else p.dead = true;
       });
-      if (p.dead) { p.im.setVisible(false); this.pprojs.splice(i, 1); this.ppFree.push(p); }
+      if (p.dead) { p.im.setVisible(false); if (p.gl) p.gl.setVisible(false); this.pprojs.splice(i, 1); this.ppFree.push(p); }
     }
     const pl = this.player;
     for (let i = this.ebs.length - 1; i >= 0; i--) {
@@ -271,10 +272,15 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < n; i++) { const a = a0 + (i / n - 0.5) * 1.1; this.spawnEnemy('email', Phaser.Math.Clamp(p.x + Math.cos(a) * R, 20, WORLD - 20), Phaser.Math.Clamp(p.y + Math.sin(a) * R, 20, WORLD - 20)); }
     }
   }
+  bossFx(e, col) {
+    const c = this.cameras.main; c.flash(350, 255, 255, 255); c.shake(500, 0.014); this.fx.ring(e.x, e.y, 380, col, 0.8); this.fx.ring(e.x, e.y, 220, 0xffffff, 0.45); this.fx.burst('boom', e.x, e.y, 36);
+    this.timeScale = 0.3; this.time.delayedCall(420, () => { this.timeScale = 1; }); const z = c.zoom; this.tweens.add({ targets: c, zoom: z * 1.12, duration: 160, yoyo: true, ease: 'Sine.easeOut' });
+    for (const o of this.enemies) if (!o.dead && !o.isBoss && (o.x - e.x) ** 2 + (o.y - e.y) ** 2 < 320 * 320) { o.kx += (o.x - e.x) * 3; o.ky += (o.y - e.y) * 3; }
+  }
   spawnBoss(i) {
     if (i < 2 && !this.over) { this.enterBossMode(i); return; }
     const def = BOSSES[i], [x, y] = this.spawnRingPos(); const e = this.spawnEnemy(def.id, x, y, def); if (!e) return;
-    this.bosses.push(e); this.announce('¡JEFE: ' + def.name + '!'); Sfx.play('boss'); Sfx.setMode('boss'); this.cameras.main.shake(300, 0.008);
+    this.bosses.push(e); this.announce('¡JEFE: ' + def.name + '!'); Sfx.play('boss'); Sfx.setMode('boss'); this.bossFx(e, 0xff4040); this.fx.say(e, '¡' + def.name + '!', 2.2, 18);
   }
   // ---------- Fases de jefe con otro tipo de juego ----------
   enterBossMode(i) {

@@ -9,7 +9,7 @@ export class BootScene extends Phaser.Scene {
     for (let i = 0; i < 6; i++) L.image('ph' + i, A + 'ph' + i + '.png');
     for (let i = 0; i < 4; i++) { L.image('pb' + i, A + 'pb' + i + '.png'); L.image('bl' + i, A + 'bl' + i + '.png'); L.image('pbl' + i, A + 'bl' + i + '.png'); L.image('sp' + i, A + 'sp' + i + '.png'); }
     for (let i = 0; i < 2; i++) { L.image('sb' + i, A + 'sb' + i + '.png'); L.image('lock' + i, A + 'lock' + i + '.png'); L.image('flop' + i, A + 'flop' + i + '.png'); }
-    L.image('mail0', A + 'mail0.png');
+    L.image('mail0', A + 'mail0.png'); for (let i = 0; i < 4; i++) L.image('ew' + i, A + 'ew' + i + '.png'); for (let i = 0; i < 3; i++) L.image('em' + i, A + 'em' + i + '.png'); L.image('es0', A + 'es0.png'); L.image('ewarn0', A + 'ewarn0.png');
   }
   walkCheck() { ART.wOk = Object.values(ART.walk).every((w) => [0, 1, 2, 3].every((i) => this.textures.exists('wk_' + w + '_w' + i) && this.textures.get('wk_' + w + '_w' + i).key !== '__MISSING')); }
   create() {
