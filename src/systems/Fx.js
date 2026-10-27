@@ -2,6 +2,7 @@
 export class Fx {
   constructor(scene) {
     this.s = scene;
+    if (!scene.textures.exists('glow')) { const cv = scene.textures.createCanvas('glow', 64, 64), cx = cv.getContext(), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64); cv.refresh(); }
     const mk = (cfg) => scene.add.particles(0, 0, 'spark', Object.assign({ emitting: false, depth: 9e5 }, cfg));
     this.em = {
       hit: mk({ speed: { min: 60, max: 170 }, lifespan: 260, scale: { start: 1.6, end: 0 }, tint: [0xfff2a0, 0xffffff] }),
@@ -9,6 +10,7 @@ export class Fx {
       dust: mk({ speed: { min: 40, max: 200 }, lifespan: 480, scale: { start: 3, end: 0 }, tint: [0xe8d8b0, 0xb8a888], alpha: { start: 0.9, end: 0 } }),
       digital: mk({ speed: { min: 60, max: 260 }, lifespan: 480, scale: { start: 2.4, end: 0 }, tint: [0x34e6ff, 0x5df28a, 0x7a5bff], blendMode: 'ADD' }),
       paper: mk({ speed: { min: 30, max: 130 }, lifespan: 600, scale: { start: 2.6, end: 0.4 }, tint: [0xffffff, 0xe8e8f0], gravityY: 120 }),
+      trail: mk({ speed: { min: 5, max: 40 }, lifespan: 340, scale: { start: 2.4, end: 0 }, alpha: { start: 0.9, end: 0 }, blendMode: 'ADD' }),
       gem: mk({ speed: { min: 30, max: 90 }, lifespan: 300, scale: { start: 1.6, end: 0 }, tint: [0x34e6ff] }),
     };
     this.gfx = scene.add.graphics().setDepth(8e5);
@@ -18,6 +20,7 @@ export class Fx {
     for (let i = 0; i < 36; i++) { const t = scene.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '14px', fontStyle: 'bold', color: '#fff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(9e5 + 5).setVisible(false); this.dmgPool.push(t); }
     for (let i = 0; i < 5; i++) { const t = scene.add.text(0, 0, '', { fontFamily: 'monospace', fontSize: '12px', fontStyle: 'bold', color: '#101020', backgroundColor: '#ffffff', padding: { x: 5, y: 3 } }).setOrigin(0.5, 1).setDepth(9e5 + 6).setVisible(false); this.says.push({ t, life: 0, ent: null }); }
   }
+  trail(x, y, tint) { const e = this.em.trail; e.setParticleTint ? e.setParticleTint(tint) : 0; e.particleTint = tint; e.explode(1, x, y); }
   burst(kind, x, y, n = 6) { const e = this.em[kind]; if (e) e.explode(n, x, y); }
   dmg(x, y, v, crit, color) {
     const t = this.dmgPool.find((o) => !o.visible); if (!t) return;
